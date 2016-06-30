@@ -1,0 +1,97 @@
+<!-- -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- Main View -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<div id="content-wrapper">
+    <div id="content-header" class="flx">
+        <h2>Debug</h2>
+    </div>
+    <span>THINKNODE_HOST=localhost THINKNODE_PORT={{port}} THINKNODE_PID=62c0464c874d115cb77423eecb85ee26</span>
+    <div id="content-body">
+
+        <div id="content-body-sidebar">
+            <h3>Configuration</h3>
+            <div>
+                <span class="label">Port:</span>
+                <input type="number" min="1" max="65535" step="1" ng-model="port" ng-change="changePort()" ng-disabled="info.enabled"/>
+            </div>
+            <div>
+                <span class="label">Branch:</span>
+                <div class="select-wrapper">
+                    <select ng-model="branch" ng-options="b as b.name for b in branches" ng-change="changeBranch()" ng-disabled="info.enabled"></select>
+                    <i class="fa fa-caret-down"></i>
+                </div>
+            </div>
+            <div>
+                <span class="label">Development Realm:</span>
+                <div class="select-wrapper">
+                    <select ng-model="realm" ng-options="r as r.name for r in realms" ng-change="changeRealm()" ng-disabled="info.enabled"></select>
+                    <i class="fa fa-caret-down"></i>
+                </div>
+            </div>
+        </div>
+
+        <div id="content-body-content">
+            <div class="flx flx-col">
+                <div class="flx-item">
+                    <h3>Status</h3>
+                    <button ng-click="pingProvider()" ng-disabled="info.pinging">Ping</button>
+                    <button ng-click="clearCache()" ng-disabled="clearing">Clear Cache</button>
+                    <div>
+                        <span class="label">State:</span>
+                        <span>{{info.state | uppercase}}</span>
+                    </div>
+                    <div>
+                        <span class="label">Context:</span>
+                        <span>{{info.context}}</span>
+                    </div>
+                    <div>
+                        <span>Debug:</span>
+                        <button ng-click="toggle()">
+                            <span ng-show="info.enabled">Stop</span>
+                            <span ng-hide="info.enabled">Start</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="flx-item">
+                    <h3>Logs</h3>
+                    <button ng-click="clearLogs()">Clear</button>
+                    <table>
+                        <tr ng-repeat="log in logs"><td>{{log.date | date:'dd-MMM-yyyy hh:mm:ss a'}}</td><td>{{log.message}}</td></tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+<!-- -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- Install Branch Modal -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<div class="modal-backdrop" ng-if="install.visible">
+    <div class="modal-holder" autoscroll="false">
+        <div class="modal-box">
+            <p>The `{{branch.name}}` branch of `{{branch.app}}` is not currently installed within the `{{realm.name}}` realm. Do you wish to install it now?</p>
+            <div class="form-actions flx">
+                <button class="cancel" ng-click="cancel('install')">No</button>
+                <button class="save" ng-click="installBranch()">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- Force Install Branch Modal -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<div class="modal-backdrop" ng-if="installForce.visible">
+    <div class="modal-holder" autoscroll="false">
+        <div class="modal-box">
+            <p>The branch `{{installForce.current}}` of `{{branch.app}}` is already installed within the `{{realm.name}}` realm. Do you wish to uninstall it and install `{{branch.name}}` in its place?</p>
+            <div class="form-actions flx">
+                <button class="cancel" ng-click="cancel('installForce')">No</button>
+                <button class="save" ng-click="installBranchForce()">Yes</button>
+            </div>
+        </div>
+    </div>
+</div>

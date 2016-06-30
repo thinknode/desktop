@@ -1,0 +1,185 @@
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// table styles - dark & alt rowed
+
+table {
+    border-radius: 5px;
+    font-size: .8rem;
+    padding: 0 !important;
+    text-align: left;
+    position: relative;
+    width: 100%;
+
+    tr {
+        th {
+            background: $offwhite;
+            font-weight: 400;
+            padding: 10px;
+
+            &.actions {
+                width: 20%;
+                text-align: center;
+            }
+            span {}
+            a {}
+        }
+
+        td {
+            color: $charcoal-light;
+            padding: 10px;
+            position: relative;
+
+            a {
+                color: $blue;
+                display: block;
+
+                .tn-toggle {
+                    &:after {
+                        content: '';
+                        position: absolute;
+                        width: 100px;
+                        height: 25px;
+                        background: url("../images/toggle-off.png") no-repeat;
+                        background-size: contain;
+                        top: 15px;
+                    }
+
+                    &.active {
+                        &:after {
+                            content: '';
+                            position: absolute;
+                            width: 100px;
+                            height: 25px;
+                            background: url("../images/toggle-on.png") no-repeat;
+                            background-size: contain;
+                            top: 15px;
+                        }
+                    }
+                }
+            }
+
+            &.action-links {
+                @include flexbox;
+                border-left: 1px solid $tan;
+
+                a {
+                    border-right: 1px solid $tan;
+                    cursor: pointer;
+                    font-family: 'Gotham-Book', arial, sans-serif;
+                    margin-right: 10px;
+                    min-width: 50px;
+                    padding-right: 10px;
+
+                    &:hover {
+                        text-decoration: underline;
+                    }
+
+                    &:last-of-type, &:only-of-type {
+                        border-right: none !important;
+                    }
+                }
+            }
+        }
+
+        &.center {
+            text-align: center;
+        }
+    }
+
+    &.errors {
+        table-layout: auto;
+        border-collapse: collapse;
+    }
+
+    &#app-display {
+        .even-row {
+            background: white;
+        }
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // border-bottom
+    &.border-bottom {
+        margin-bottom: 45px !important;
+
+        &:after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background-image: linear-gradient(to right, rgba(143, 143, 140, 0), rgba(143, 143, 140, 0.5), rgba(143, 143, 140, 0));
+            left: 0;
+            bottom: -25px;
+        }
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // dark & alt rowed
+    &.drk {
+        border-radius: 5px;
+        border: 1px solid $tan;
+
+        tr {
+            &.even {}
+
+            &.odd {
+                background: $offwhite;
+            }
+
+            th {
+                background: $charcoal-light;
+                color: white;
+
+                &:first-of-type {
+                    border-top-left-radius: 4px;
+                }
+
+                &:last-of-type {
+                    border-top-right-radius: 4px;
+                }
+            }
+
+            td {
+                color: $charcoal-light;
+                padding: 10px;
+
+                a {
+                    color: $blue;
+                }
+            }
+
+            &.center {
+                text-align: center;
+            }
+        }
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // light with cell borders
+    &.flat {
+        border-collapse: collapse;
+        border: 1px solid $offwhite;
+        font-size: 1.3rem;
+        text-align: left;
+        width: 100%;
+
+        tr {
+            th {
+                background: $offwhite;
+                font-weight: 400;
+                padding: 10px;
+            }
+
+            td {
+                border-bottom: 1px solid $offwhite;
+                border-right: 1px solid $offwhite;
+                color: $charcoal-light;
+                padding: 10px;
+
+                a {
+                    color: $blue;
+                }
+            }
+
+            &.center {
+                text-align: center;
+            }
+        }
+    }
+}

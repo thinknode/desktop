@@ -1,0 +1,13 @@
+machine:
+  node:
+    version: 4.1.1
+
+dependencies:
+  pre:
+    - npm install
+    - npm install -g grunt-cli
+    - npm install -g bower
+
+general:
+  artifacts:
+    - "./dist"

@@ -1,0 +1,38 @@
+<div id="main">
+    <div id="login-panel" ng-cloak>
+        <div id="login-inner-panel">
+            <div id="login-inner-panel-header">
+                <h1>Sign in</h1>
+                <h2>Enter your team's Thinknode domain.</h2>
+            </div>
+            <form id="login-domain-form" ng-submit="submit()">
+                <div ng-if="isProfile">
+                    <span>{{data.user}}</span>
+                    <span>{{data.username}}@</span>
+                    <span>{{data.host}}</span>
+                </div>
+                <div ng-if="!isProfile">
+                    <div ng-switch="isCustomHost">
+                        <div class="flx domain-add" ng-switch-when="false">
+                            <input type="text" name="account" ng-model="data.account" placeholder="Account">
+                            <i>.thinknode.io</i>
+                            <i class="fa fa-globe" ng-click="toggleCustomHost($event)"></i>
+                        </div>
+                        <div class="flx domain-add" ng-switch-when="true">
+                            <input type="text" name="host" ng-model="data.host" placeholder="https://">
+                            <i class="fa fa-user" ng-click="toggleCustomHost($event)"></i>
+                        </div>
+                    </div>
+                    <input type="text" name="username" ng-model="data.username" ng-required="true" ng-minlength="3" placeholder="Username">
+                </div>
+                <input type="password" name="password" ng-model="data.password" placeholder="Password">
+                <div class="flx">
+                    <button class="login" type="submit" value="Submit">Sign In</button>
+                </div>
+            </form>
+        </div>
+        <div id="login-panel-footer">
+             <a class="multi-signIn" ui-sref="auth.select" ng-hide="!hasCredentials">Sign in with a different account</a>
+        </div>
+    </div>
+</div>

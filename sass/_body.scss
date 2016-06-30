@@ -1,0 +1,19 @@
+/*
+ * Body Styling
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+html, body {
+	font-family: "gotham-light", arial !important;
+    height: 100%;
+    overflow:hidden;
+
+    ng-view {
+        height: 100%;
+    }
+}
+
+.updateLink {
+    cursor: pointer;
+}

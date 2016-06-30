@@ -1,0 +1,103 @@
+<!-- -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- Main View -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<div id="content-wrapper">
+    <div id="content-header" class="flx">
+        <h2>{{$stateParams.cls}}</h2>
+    </div>
+    <div id="content-body" class="flx">
+        <div id="content-body-sidebar">
+            <input placeholder="Filter types" ng-model="filterText" />
+            <div id="sidebar-header">
+                <button class="create" ng-click="addItem()">Add {{singularCls}}</button>
+                <button class="save" ng-disabled="!current.valid" ng-click="saveAll()">Save All</button>
+            </div>
+            <div id="sidebar-nav">
+                <ul class="small">
+                    <li ng-repeat="item in items | filter:filterItems" ng-click="setCurrent(item)" tooltips tooltip-side="right" tooltip-template="{{item.name}}" tooltip-hidden="{{item.name.length < 16}}">
+                        <i ng-show="item.dirty" class="fa fa-floppy-o"></i> {{item.name}} 
+                    </li>
+                </ul> 
+            </div>
+        </div>
+        <div ng-if="current.item" id="content-body-content">
+            <form novalidate name="saveItemForm" ng-submit="saveItemForm.$valid && save($stateParams.cls)" role="form" class="css-form">
+                <div class="input-wrapper">
+                    <span class="label">Name:</span>
+                    <input name="name" ng-pattern="/^[0-9a-zA-Z_.-]{1,80}$/" ng-model="current.item.name" ng-change="current.item.dirty=true" required />
+                </div>
+                <div ng-show="saveItemForm.$submitted && saveItemForm.name.$error.required" class="label">Name is required</div>
+                <div ng-show="saveItemForm.$submitted && saveItemForm.name.$error.pattern" class="label">Name may only contain numbers, letters, underscores, periods, and hyphens</div>
+                <div class="input-wrapper">
+                    <span class="label">Description:</span>
+                    <textarea name="description" ng-maxlength="65535" ng-model="current.item.description" ng-change="current.item.dirty=true" required></textarea>
+                </div>
+                <div ng-show="saveItemForm.$submitted && saveItemForm.description.$error.required" class="label">Description is required</div>
+                <div ng-show="saveItemForm.$submitted && saveItemForm.description.$error.maxlength" class="label">Description may be no longer than 65535 characters</div>
+                <div ng-if="$stateParams.cls === 'functions'" class="input-wrapper">
+                    <span class="label">Execution class:</span>
+                    <select name="execution_class" ng-model="current.item.execution_class" ng-options="ec as ec for ec in execution_classes" required>
+                        <option value="" selected disabled>--Select an execution class--</option>
+                    </select>
+                    <!--<i class="fa fa-caret-down"></i>-->
+                </div>
+                <div ng-show="saveItemForm.$submitted && saveItemForm.execution_class.$error.required" class="label">Execution class is required</div>
+                <span>Schema:</span>
+                <div name="schema" ui-ace="{
+                    mode: 'json',
+                    onLoad: aceLoaded
+                }" ng-model="current.schema">
+                </div>
+                <div class="content-body-actions-wrapper">
+                    <button type="submit" class="save" ng-disabled="!current.valid">
+                        <i class="fa fa-spinner fa-spin"></i>
+                        <span>Save</span>
+                    </button>
+                    <button ng-if="!current.item.dirty" type="button" class="save" ng-click="delete($stateParams.cls)">
+                        <i class="fa fa-spinner fa-spin"></i>
+                        <span>Delete</span>
+                    </button>
+                </div>
+            </form>
+
+        </div>
+    </div>
+</div>
+<!-- -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- Create Item Modal -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<div class="modal-backdrop" ng-if="add.visible">
+    <div class="modal-holder" autoscroll="false">
+        <div class="modal-box">
+            <p>Add {{singularCls.toLowerCase()}}</p>
+            <form novalidate name="addItemForm" ng-submit="addItemForm.$valid && addItemSubmit()" role="form" class="css-form">
+                <div class="flx flx-1">
+                    <input type="text" ng-class="{'error': addItemForm.$submitted && addItemForm.name.$invalid}" ng-pattern="/^[0-9a-zA-Z_.-]{1,80}$/" ng-model="add.item.name" name="name" placeholder="Name" required />
+                </div>
+                <div ng-if="addItemForm.$submitted" class="flx flx-1 warning">
+                    <span ng-if="addItemDuplicate === true">A {{singularCls.toLowerCase()}} with this name already exists!</span>
+                    <span ng-if="addItemForm.name.$invalid && addItemForm.name.$error.required">Name is required!</span>
+                    <span ng-if="addItemForm.name.$invalid && addItemForm.name.$error.pattern">
+		                App name is invalid! A valid app name may be up to 32 characters and can only contain lowercase letters (a-z), numbers (0-9), underscores (_), periods (.), and hyphens (-).
+		            </span>
+                </div>
+                <div class="flx flx-1">
+                    <input type="text" ng-class="{'error': addItemForm.$submitted && addItemForm.description.$invalid}" ng-maxlength="255" ng-model="add.item.description" name="description" placeholder="Description" required />
+                </div>
+                <div ng-if="addItemForm.$submitted && addItemForm.description.$invalid" class="flx flx-1 warning">
+                    <span ng-if="addItemForm.description.$error.required">Description is required!</span>
+                    <span ng-if="addItemForm.description.$error.maxlength">Description cannot be greater than 255 characters!</span>
+                </div>
+                <div class="form-actions flx">
+                    <button type="submit" ng-disabled="add.processing" class="cancel" ng-click="addItemCancel()">Cancel</button>
+                    <button type="submit" class="save" ng-class="{loading:add.processing}" ng-disabled="add.processing">
+                        <span>Add</span>
+                        <i class="fa fa-spinner fa-spin"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>

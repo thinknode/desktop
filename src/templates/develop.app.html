@@ -1,0 +1,28 @@
+<div class="viewport">
+    <div id="inner-nav">
+        <span class="title">{{app.display_name}}</span>
+        <div class="nav-item">
+            <span class="nav-heading">Information</span>
+            <a ui-sref="devkit.app.details({app: app.name})" ng-class="{active: $state.is('devkit.app.details')}">Details</a>
+        </div>
+        <div class="nav-item">
+            <span class="nav-heading">Manifest</span>
+            <a ui-sref="devkit.app.dependencies" ng-class="{active: $state.is('devkit.app.dependencies')}">Dependencies</a>
+            <a ui-sref="devkit.app.provider" ng-class="{active: $state.is('devkit.app.provider')}">Provider</a>
+            <a ui-sref="devkit.app.definitions({cls: 'types'})" ng-class="{active: $state.includes('devkit.app.definitions', {cls: 'types'})}">Types</a>
+            <a ui-sref="devkit.app.definitions({cls: 'functions'})" ng-class="{active: $state.includes('devkit.app.definitions', {cls: 'functions'})}">Functions</a>
+            <a ui-sref="devkit.app.definitions({cls: 'records'})" ng-class="{active: $state.includes('devkit.app.definitions', {cls: 'records'})}">Records</a>
+            <a ui-sref="devkit.app.definitions({cls: 'upgrades'})" ng-class="{active: $state.includes('devkit.app.definitions', {cls: 'upgrades'})}">Upgrades</a>
+        </div>
+        <div class="nav-item">
+            <span class="nav-heading">Test</span>
+            <a ui-sref="devkit.app.debug" ui-sref-opts="{app: app.name}" ng-class="{active: $state.is('devkit.app.debug')}">Debug</a>
+            <a ui-sref="devkit.app.stage" ui-sref-opts="{app: app.name}" ng-class="{active: $state.is('devkit.app.stage')}">Stage</a>
+        </div>
+        <div class="nav-item">
+            <span class="nav-heading">Deploy</span>
+            <a ui-sref="devkit.app.deploy" ui-sref-opts="{app: app.name}" ng-class="{active: $state.is('devkit.app.release')}">Release</a>
+        </div>
+    </div>
+    <div class="viewmain" ui-view></div>
+</div>

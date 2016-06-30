@@ -1,0 +1,198 @@
+/*
+ * Form Styling
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+form {
+    > *:not(:last-child) {
+        margin-bottom: 20px;
+    }
+
+    width: 100%;
+
+    .flx-2 {
+        .flx-item {
+            width: 49% !important;
+        }
+    }
+
+    .domain-add {
+        margin-bottom: 20px;
+
+        input {
+            border-bottom-left-radius: 4px;
+            border-top-left-radius: 4px;
+            border-bottom-right-radius: 0;
+            border-top-right-radius: 0;
+
+            @include flex(1);
+        }
+
+        i {
+            @include flexbox;
+            @include justify-content(center);
+            @include align-items(center);
+
+            background: $offwhite;
+            border: 1px solid #d9d9d6;
+            border-right: 0;
+            border-left: 0;
+            font-style: normal;
+            padding: 0 20px;
+
+            &:last-of-type {
+                background: $charcoal-lighter;
+                border: none;
+                color: white;
+                border-bottom-right-radius: 4px;
+                border-top-right-radius: 4px;
+            }
+        }
+    }
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// form elements that can live in or outside of a form
+
+.label {
+    font-size: .9rem;
+    font-family: "Gotham-Book", arial !important;
+}
+
+.select-wrapper {
+    border: 1px solid #d9d9d6;
+    border-radius: 4px;
+    width: 100%;
+    position: relative;
+
+    select {
+        background: white;
+        border: 0;
+        border-radius: 4px;
+        color: $charcoal;
+        margin-bottom: 0;
+        outline: 0;
+        width: 100%;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        appearance: none;
+
+        option {
+            margin-bottom: 5px;
+        }
+    }
+
+    i {
+        color: $charcoal;
+        pointer-events: none;
+        position: absolute;
+        top: 5px;
+        right: 10px;
+    }
+}
+
+button {
+    border: 0;
+    border-radius: 4px;
+    color: white;
+    cursor: pointer;
+    font-size: .7rem;
+    font-family: "gotham-medium", arial !important;
+    min-width: 75px !important;
+    outline: none;
+    padding: 10px;
+    text-shadow: 0 1px 0 rgba(37, 48, 54, 0.25);
+    text-transform: uppercase;
+
+    &.login, &.send, &.action {
+        background: #73acc9;
+    }
+
+    &.action {
+        width: inherit;
+    }
+
+    &.cancel, &.clear {
+        background: none;
+        color: $tanner;
+        margin-right: 20px;
+        text-shadow: none;
+
+        &:hover {
+            color: $orange;
+        }
+    }
+
+    &.create {
+        background: $charcoal-lighter;
+    }
+
+    &.create.loading {
+        background: $charcoal-lighter;
+        cursor: wait;
+
+        i {
+            display: block;
+            position: absolute;
+            top: 7px;
+            left: 0;
+            right: 0;
+            font-size: 1.5rem;
+        }
+
+        span {
+            color: $charcoal-lighter;
+        }
+    }
+
+    &.save {
+        background: $blue-drk;
+
+        i {
+            display: none;
+        }
+    }
+
+    &.save.loading {
+        background: $charcoal-lighter;
+        cursor: wait;
+
+        i {
+            display: block;
+            position: absolute;
+            top: 7px;
+            left: 0;
+            right: 0;
+            font-size: 1.5rem;
+        }
+
+        span {
+            color: $charcoal-lighter;
+        }
+    }
+
+    &.disabled {
+        background: $offwhite;
+        color: $tan;
+    }
+}
+
+.checkbox-text {
+    font-size: .8rem;
+}
+
+input, select, textarea {
+    border: 1px solid #d9d9d6;
+    border-radius: 4px;
+    font-family: "gotham-light", arial !important;
+    font-size: .8rem;
+    font-weight: lighter;
+    outline: none;
+    padding: 8px;
+    width: 100%;
+}
+
+input[type=checkbox] {
+    width: 18px;
+}

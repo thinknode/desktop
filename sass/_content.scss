@@ -1,0 +1,187 @@
+/*
+ * Content Styling
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+#content {
+    @include flexbox;
+    width: 100%;
+
+    .viewport {
+        @include flexbox;
+        width: 100%;
+
+        .viewmain {
+            @include flexbox;
+            width: 100%;
+        }
+    }
+
+    #content-wrapper {
+        background: $offwhite;
+        overflow-y: scroll;
+        width: 100%;
+        @include flexbox;
+        @include flex-direction(column);
+
+        #content-header {
+            background: white;
+            border-bottom: 1px solid $offwhite;
+            font-size: .9rem;
+            min-height: 54px;
+            padding: 10px;
+
+            h2 {
+                color: $tanner;
+                font-family: 'Gotham-Light', arial, sans-serif;
+                line-height: 33px;
+                text-transform: capitalize;
+            }
+        }
+
+        .debug-pane {
+            .flx-item:first-child {
+                margin-right: 20px;
+                width: 30%;
+
+                > *:not(:last-child) {
+                    margin-bottom: 20px;
+                }
+            }
+            .flx-item:last-child {
+                width: 60%;
+            }
+            h3 {
+                margin-bottom: 20px;
+            }
+        }
+
+        #content-body {
+            padding: 20px;
+            @include flexbox;
+            @include flex(1);
+
+            > *:not(:last-child), > *:not(:only-child) {
+                margin-bottom: 20px;
+            }
+
+            #content-body-sidebar {
+                max-width: 200px;
+                margin-right: 20px;
+                @include flex(0 0 auto);
+
+                > *:not(:last-child), > *:not(:only-child) {
+                    margin-bottom: 15px;
+                }
+
+                #sidebar-header {
+                    @include flexbox;
+                    @include justify-content(space-between);
+
+                    button {
+                        width: 48%;
+                        font-size: .5rem;
+                    }
+                }
+
+                #sidebar-nav {
+                    max-height: 369px;
+
+                    ul {
+
+                        tooltip:not(:last-child) {
+                            border-bottom: 1px solid $tan;
+                        }
+
+                        li {
+                            background: white;
+                            cursor: pointer;
+                            overflow: hidden;
+                            padding: 0 10px;
+                            text-transform: capitalize;
+
+                            i {
+                                color: $error-red;
+                                font-size: .7rem;
+                            }
+
+                            &:hover {
+                                background: $charcoal-lighter;
+                                color: white;
+
+                                i {
+                                    color: white;
+                                }
+                            }
+                        }
+
+                        &.small {
+                            li {
+                                font-size: .7rem;
+                                line-height: 25px;
+                                white-space: nowrap;
+                                text-overflow: ellipsis;
+
+                            }
+                        }
+
+                        &.large {
+                            li {
+                                font-size: .8rem;
+                                line-height: 40px;
+                            }
+                        }
+                    }
+                }
+            }
+
+            #content-body-content {
+                border-left: 1px solid $tan;
+                margin-bottom: 0 !important;
+                padding-left: 20px;
+                width: 100%;
+                @include flexbox;
+                @include flex-direction(column);
+                @include flex(1);
+
+                > *:not(:last-child), > *:not(:only-child) {
+                    margin-bottom: 15px;
+                }
+
+                .ace_editor {
+                    min-height: 200px;
+                    @include flex(1);
+                }
+            }
+
+            #error-reports-wrapper {
+                @include flexbox;
+                @include justify-content(center);
+                @include align-items(center);
+
+                #report {
+                    #report-header {
+                        color: $charcoal-lighter;
+                        text-align: center;
+                        i {
+                            display: block;
+                            font-size: 3.5rem;
+                            margin-bottom: 20px;
+                        }
+                        .error-msg {
+                            font-size: 1.5rem;
+                        }
+                    }
+                    #report-body {
+                        font-size: .9rem;
+                        padding:40px;
+                    }
+                    #report-footer {
+                        text-align: center;
+                    }
+                }
+            }
+        }
+    }
+}

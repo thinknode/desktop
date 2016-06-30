@@ -1,0 +1,275 @@
+/*
+ * Nav Stylings
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+#root-nav {
+    @include flexbox;
+    @include flex-direction(column);
+    @include flex(0 0 auto);
+    @include nohighlight;
+
+    background-color: $charcoal;
+    border-right: 10px solid #cdcfcf;
+    overflow-y: auto;
+    width: 200px;
+
+    #session {
+        min-height: 70px;
+        padding: 10px;
+        position: relative;
+
+        span {
+            color: white;
+            display: block;
+
+            &:nth-child(1) {
+                background: #cdcfcf;
+                border-radius: 3px;
+                color: $charcoal-light;
+                font-family: 'Gotham-Medium', arial, sans-serif;
+                font-size: 12px;
+                margin-bottom: 10px;
+                padding: 5px 10px;
+            }
+
+            &:nth-child(2) {
+                font-family: 'Gotham-Light', arial, sans-serif;
+                font-size: .8rem;
+            }
+
+            i {
+                background: $orange;
+                border-radius: 150px;
+                display: inline-block;
+                height: 8px;
+                margin: 0 5px 0 10px;
+                width: 8px;
+            }
+        }
+
+        #toggle-logout {
+            border: 1px solid $border;
+            color: white;
+            cursor: pointer;
+            font-size: 12px;
+            height: 20px;
+            padding: 3px 7px 0px 7px;
+            position: absolute;
+            top: 10px;
+            right: 10px;
+
+            &:hover {
+                background: $orange;
+            }
+        }
+    }
+
+    .root-nav-heading {
+        @include flex(0 0 auto);
+
+        @include nohighlight;
+
+        background: $charcoal-light;
+        color: white;
+        cursor: default;
+        padding: 10px;
+    }
+
+    .root-nav-items {
+        > span:nth-child(1) {
+            color: $orange;
+            display: block;
+            font-family: 'Gotham-Book', arial, sans-serif;
+            font-size: 1rem;
+            margin-bottom: 10px;
+            pointer-events: none;
+        }
+
+        > a {
+            background: $charcoal;
+            color: $silver-light;
+            display: block;
+            font-family: 'Gotham-Light', arial, sans-serif;
+            font-size: .8rem;
+            margin: 0 0 0 10px;
+            padding: 10px;
+            position: relative;
+            text-decoration: none;
+
+            &:hover {
+                color: $blue;
+            }
+
+            // remove when session logout is working
+            &.temp-logout {
+                background: white;
+                margin-bottom: 0;
+                color: $charcoal;
+                font-family: 'Gotham-Medium', arial, sans-serif;
+            }
+        }
+
+        .service {
+            border-top: 1px solid #323f46;
+            margin-bottom: 10px;
+            padding-top: 10px;
+
+            span {
+                color: $silver-light;
+                display: block;
+                font-family: 'Gotham-Light', arial, sans-serif;
+                font-size: .8rem;
+                margin-bottom: 5px;
+                pointer-events: none;
+            }
+
+            .module {
+                color: white;
+                cursor: pointer;
+                font-family: 'Gotham-Light', arial, sans-serif;
+                font-size: .7rem;
+                margin-left: 10px;
+                padding: 5px 0;
+
+                &:hover {
+                    color: $blue;
+                }
+            }
+        }
+    }
+
+    a.nav-link {
+        color: $silver-light;;
+        cursor: pointer;
+        font-family: 'Gotham-Light', arial, sans-serif;
+        font-size: .8rem;
+        margin-top: 20px;
+        padding: 10px;
+
+        &:hover {
+            color: $blue;
+        }
+    }
+
+    #root-nav-actions {
+        a {
+            background: $charcoal-light;
+            color: $silver-light;
+            cursor: pointer;
+            display: block;
+            font-family: 'Gotham-Light', arial, sans-serif;
+            font-size: .8rem;
+            margin-bottom: 2px;
+            padding: 10px;
+            position: relative;
+            text-decoration: none;
+
+            &:hover {
+                color: $blue;
+            }
+
+            // remove when session logout is working
+            &.temp-logout {
+                background: white;
+                margin-bottom: 0;
+                color: $charcoal;
+                font-family: 'Gotham-Medium', arial, sans-serif;
+            }
+        }
+    }
+}
+
+#inner-nav {
+    @include flexbox;
+    @include flex-direction(column);
+    @include flex(0 0 auto);
+    @include nohighlight;
+
+    background: $offwhite;
+    border-right: 1px solid #cdcfcf;
+    font-family: 'Gotham-Book', arial, sans-serif;
+    overflow-y: auto;
+    width: 200px;
+
+    .title {
+        background: white;
+        border-bottom: 1px solid #f1f1ef;
+        color: #7e8181;
+        font-family: 'Gotham-Book', arial, sans-serif;
+        line-height: 33px;
+        min-height: 54px;
+        padding: 10px;
+    }
+
+    > span {
+        color: $charcoal;
+        min-height: 30px;
+        padding: 12px 12px 0 12px;
+    }
+
+    .nav-item {
+        @include flex(0 0 auto);
+
+        border-bottom: 1px solid #cdcfcf;
+        font-size: .8rem;
+        padding: 12px;
+
+        > span {
+            color: $charcoal-light;
+            display: block;
+            font-family: 'Gotham-Medium', arial, sans-serif;
+            margin-bottom: 10px;
+        }
+
+        div, a {
+            color: $grey;
+            cursor: pointer;
+            display: block;
+            line-height: 20px;
+            margin: 0 0 10px 10px;
+            text-decoration: none;
+
+            &:last-of-type {
+                margin: 0 0 0 10px;
+            }
+
+            &:hover {
+                color: $blue;
+                text-decoration: underline;
+            }
+
+            &.active {
+                color: $blue;
+            }
+        }
+    }
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// touch
+
+[angular-ripple] {
+    position: relative;
+    overflow: hidden;
+}
+
+.angular-ripple {
+    display: block;
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 50%;
+    transform: scale(0);
+}
+
+.angular-ripple.animate {
+    animation: ripple 0.35s linear;
+}
+
+@keyframes ripple {
+    100% {
+        opacity: 0;
+        transform: scale(2.5);
+    }
+}

@@ -1,0 +1,46 @@
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// modal styles
+
+.modal-backdrop {
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    bottom: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+
+    .modal-holder {
+        @include flexbox;
+        @include justify-content(center);
+        @include align-items(center);
+        height: 100%;
+
+        .modal-box {
+            width: 450px;
+            background: white;
+            border-radius: 4px;
+            padding: 20px;
+            box-shadow: 1px 2px 5px rgba(0, 0, 0, 0.3);
+
+            p {
+                margin-bottom: 20px;
+            }
+
+            .enable {
+                background: $blue-drk;
+            }
+
+            .cancel {
+                background: $charcoal-light;
+                margin: 0 20px 0 0;
+            }
+
+            form {
+                input, textarea, select {
+                    width: 100%;
+                }
+            }
+        }
+    }
+}

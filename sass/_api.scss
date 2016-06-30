@@ -1,0 +1,344 @@
+/*
+ * Api Styling
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// errors
+
+@mixin error($border_color, $background_color, $color) {
+  border: 1px solid $border_color;
+  background-color: $background_color;
+  color: $color;
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// current api route
+
+@mixin route($color) {
+    background: $color !important;
+    color: white;
+
+    > .type {
+      background: white;
+      border-radius:4px;
+      color: $color !important;
+      font-family: 'Gotham-Medium', arial, sans-serif;
+      line-height: 19px;
+      margin-right: 10px;
+      padding: 5px;
+      text-transform: uppercase;
+    }
+
+    > .url {
+      line-height: 29px;
+      margin-right: 10px;
+    }
+
+    > .title {
+      color: white;
+      font-size: .8rem;
+      line-height: 29px;
+    }
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// glow animation
+
+@mixin glowAnimation($r, $g, $b, $name) {
+    @keyframes #{$name} {
+      0%  { box-shadow: 0 0 22px 0 rgba($r,$g,$b,1); }
+      25% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0.75); }
+      50% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0.50); }
+      75% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0.25); }
+      100% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0); }
+    }
+
+    -webkit-animation: #{$name} 1s ease-in-out;
+    -moz-animation: #{$name} 1s ease-in-out;
+    -o-animation: #{$name} 1s ease-in-out;
+    animation: #{$name} 1s ease-in-out;
+}
+
+#api {
+    @include flexbox;
+    width: 100%;
+
+    #api-content {
+        background: $offwhite;
+        overflow-y: scroll;
+        width: 100%;
+
+        > :nth-child(n+2) {
+            padding: 20px 20px 0 20px
+        }
+
+        h2 {
+            color: #7e8181;
+            font-family: 'Gotham-Light', arial, sans-serif;
+            line-height: 39px;
+        }
+
+        #api-header {
+            background: white;
+            border-bottom: 1px solid $offwhite;
+            color: $tan;
+            font-size: .9rem;
+            min-height: 60px;
+            padding: 20px;
+            position: relative;
+        }
+
+        #api-route-current {
+            background: white;
+            border-bottom: 1px solid $offwhite;
+            color: $tan;
+            cursor: pointer;
+            font-size: .9rem;
+            min-height: 54px;
+            padding: 12px;
+            position: relative;
+
+            @include flexbox;
+
+            i {
+                font-size: 1.2rem;
+                line-height: 29px;
+            }
+
+            > .title {
+                color: $tan;
+            }
+
+            &.get { @include route($blue); }
+            &.post { @include route($post-bg); }
+            &.put { @include route($put-bg); }
+            &.patch { @include route($patch-bg); }
+            &.delete { @include route($delete-bg); }
+
+            #api-route-dropdown {
+                background: white;
+                box-shadow: 0 3px 3px rgba(37, 48, 54, 0.85);
+                padding: 20px;
+                position: absolute;
+                top: 54px;
+                right: 0;
+                left: 0;
+                width: 100%;
+                z-index: 9999;
+
+                .dropdown-resource {
+                    margin-bottom: 20px;
+                    > span {
+                        color: $charcoal-light !important;
+                        display: block;
+                        font-family: 'Gotham-Medium', arial, sans-serif;
+                        font-size: 1rem;
+                        margin-bottom: 10px;
+                    }
+
+                    .dropdown-route {
+                        color: $grey;
+                        font-family: 'Gotham-Book', arial, sans-serif;
+                        font-size: .8rem;
+                        padding: 5px;
+
+                        &:hover {
+                            background: $offwhite;
+                        }
+
+                        > .type {
+                            color: $tanner;
+                            font-family: 'Gotham-Medium', arial, sans-serif;
+                            text-transform: uppercase;
+                        }
+
+                        .title {
+                            color: $blue;
+                        }
+                    }
+                }
+            }
+        }
+
+        #api-route-params, #api-route-description, #api-query-params {
+            font-family: 'Gotham-Book', arial, sans-serif;
+
+            width: 100%;
+            min-height: 163px;
+            @include flex(0 0 auto);
+
+            > * {
+                margin-bottom: 20px;
+            }
+
+            > *:only-child {
+                margin-bottom: 0;
+            }
+
+            .param {
+                @include flexbox;
+                background: #f7f8f8;
+                border-radius: 4px;
+                padding: 10px;
+
+                &:last-child {
+                    margin-bottom: 0 !important;
+                }
+
+                .param-left {
+
+                    width:120px;
+                    @include flex(0 0 auto);
+
+                    .param-field {
+                        color: #36444b;
+                        font-weight: bold;
+                        font-size: .8rem;
+                        margin-bottom: 0;
+                    }
+
+                    .param-type {
+                        color: #73acc9;
+                        font-size: .7rem;
+                    }
+
+                    > * {
+                        margin-bottom: 10px;
+                    }
+                }
+
+                .param-right {
+
+                    width: 100%;
+
+                    .param-desc {
+                        color: #878a8a;
+                        font-size: .8rem;
+                        margin-bottom: 0;
+                    }
+
+                    > * {
+                        margin-bottom: 10px;
+                    }
+
+                    input {
+                        padding: 5px;
+                    }
+                }
+            }
+
+            .description {
+
+                @include flexbox;
+                background: white;
+                border-radius: 4px;
+                padding: 10px;
+            }
+        }
+
+        #api-body {
+            margin-bottom: 20px;
+
+            @include flex(0 0 auto);
+
+            #api-body-header {
+                @include flexbox;
+                margin-bottom: 20px;
+            }
+
+        }
+
+        #api-action {
+            @include flexbox;
+            margin-bottom: 0 !important;
+
+            button {
+                &.get {
+                    background: $blue !important;
+                    color: white;
+                }
+
+                &.post {
+                    background: $post-bg !important;
+                    color: white;
+                }
+
+                &.put {
+                    background: $put-bg !important;
+                    color: white;
+                }
+
+                &.patch {
+                    background: $patch-bg !important;
+                    color: white;
+                }
+
+                &.delete {
+                    background: $delete-bg !important;
+                    color: white;
+                }
+            }
+        }
+
+        #api-status {
+            margin-bottom: 0 !important;
+
+            .api-status-box {
+                @include flexbox;
+                border: 0;
+                border-radius: 4px;
+                font-family: "gotham-medium", arial !important;
+                font-size: 1rem;
+                font-weight: lighter;
+                outline: none;
+                padding: 10px;
+                width: 100%;
+
+                &.success { @include error($success-bdr, $success-bg, #68a988); }
+                &.failure { @include error($error-red, $error-red-lt, $error-red); }
+                &.success.glow { @include glowAnimation(153,204,178,'fadeGreen'); }
+                &.failure.glow { @include glowAnimation(164,86,90,'fadeRed'); }
+
+                i {
+                    font-size: 30px;
+                    margin-right: 10px;
+                }
+
+                span {
+                    line-height: 30px;
+                }
+            }
+        }
+
+        #api-result {
+            padding-bottom:20px;
+            h2 {
+                margin-bottom: 20px !important;
+                span {
+                    background: #f7f8f8;
+                    border-radius: 5px;
+                    display: inline-block;
+                    font-size: 15px;
+                    font-weight: lighter;
+                    line-height: 30px;
+                    padding: 0 10px;
+                }
+            }
+        }
+
+        .animate-enter {
+            transition: .5s linear all;
+            opacity: 0;
+        }
+
+        .animate-enter.animate-enter-active {
+            opacity: 1;
+        }
+
+        .ace_editor {
+            min-height: 200px;
+        }
+    }
+}

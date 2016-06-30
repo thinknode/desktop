@@ -1,0 +1,26 @@
+/*
+ * Misc Styling
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Center Text
+
+.center-text {
+    text-align: center;
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Increase Font Weight
+
+.weighted {
+    font-family: 'gotham-medium', arial, sans-serif;
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// grow a container
+
+.spacer {
+    @include flex(1);
+}

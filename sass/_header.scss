@@ -1,0 +1,17 @@
+/*
+ * Header Styling
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+header {
+    background: $charcoal;
+    height: 50px;
+    position: fixed;
+    width: 100%;
+    z-index: 8888;
+
+    &.shadow {
+        border-bottom:2px solid $border-hdr;
+    }
+}

@@ -1,0 +1,119 @@
+/*
+ * Flexboxes Styling
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+.flx {
+    @include flexbox;
+
+    .spacer {
+        @include flex(1);
+    }
+
+    .flx-item {
+        > *:not(:last-child) {
+            margin-bottom: 20px;
+        }
+
+        > *:only-child {
+            margin-bottom: 205px;
+        }
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // 100%
+    &.flx-1 {
+        @include flex-wrap(wrap);
+
+        > .flx-item {
+            width: 100%;
+        }
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // 50%
+    &.flx-2 {
+        @include flex-wrap(wrap);
+        @include justify-content(space-between);
+
+        > .flx-item {
+            width: 50%;
+        }
+
+        &.domain-add {
+            @include justify-content(flex-start);
+
+            :first-child {
+                @include flex(1 0 auto);
+            }
+
+            :last-child {
+                @include flex(0 1 auto);
+            }
+        }
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // 30%
+    &.flx-3 {
+        @include flex-wrap(wrap);
+
+        > .flx-item {
+            width: 33.33%;
+        }
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // 25%
+    &.flx-4 {
+        @include flex-wrap(wrap);
+
+        > .flx-item {
+            width: 25%;
+        }
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Push
+    &.flx-push {
+        @include flex-wrap(wrap);
+
+        > .flx-item:first-child {
+            @include flex(1 0 auto);
+        }
+
+        > .flx-item:last-child {
+            @include flex(0 0 auto);
+        }
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Pull
+    &.flx-pull {
+        @include flex-wrap(wrap);
+        position: relative;
+
+        > .flx-item:first-child {
+            @include flex(0 1 auto);
+        }
+
+        > .flx-item:last-child {
+            @include flex(1 0 auto);
+        }
+
+        .param-left {
+            min-width: 120px;
+        }
+
+        .param-right {
+            max-width: 642px;
+        }
+    }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Columns
+    &.flx-col {
+        @include flex-direction(column);
+    }
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Misc
+
+.spacer {
+    @include flex(1);
+}

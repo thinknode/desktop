@@ -1,0 +1,89 @@
+<div id="inner-nav">
+    <span class="title">Services</span>
+    <div class="nav-item" ng-repeat="service in services" ng-click="changeService(service.id)">
+        <span>{{service.name}}</span>
+        <div class="module"
+             ng-repeat="module in service.modules" ng-click="selectModule($event, service.id, module.id)"
+             ng-class="{active: module.name == currentModule.name}"
+        >
+
+            {{module.name}}
+        </div>
+    </div>
+</div>
+<div id="api">
+    <div id="api-content">
+        <div ng-if="currentRoute" id="api-route-current" ng-click="clickRoute($event)" ng-class="currentRoute.type">
+            <span class="type">{{currentRoute.type}}</span>
+            <span class="url">{{currentRoute.url}}</span>
+            <span class="title">({{currentRoute.title}})</span>
+            <div class="spacer"></div>
+            <i class="fa fa-chevron-circle-down"></i>
+            <div id="api-route-dropdown" ng-show="showRoutes">
+                <div class="dropdown-resource" ng-repeat="resource in currentModule.resources">
+                    <span>{{resource.name}}</span>
+                    <div class="dropdown-route" ng-repeat="route in resource.routes" ng-click="selectRoute($event, $parent.$index, $index)">
+                        <span class="type">{{route.type}}</span>
+                        <span class="url">{{route.url}}</span>
+                        <span class="title">({{route.title}})</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="api-route-params" ng-if="currentRoute.params">
+            <h2>Route Parameters</h2>
+            <div class="param" ng-repeat="param in currentRoute.params">
+                <div class="param-left flx flx-col">
+                    <div class="param-field">{{param.field}}</div>
+                    <div class="param-type">{{param.type}}</div>
+                </div>
+                <div class="param-right">
+                    <input class="param-value" ng-model="currentParams[param.field]" type="text">
+                    <p class="param-desc">{{param.description}}</p>
+                </div>
+            </div>
+        </div>
+        <div id="api-query-params" ng-if="currentRoute.query">
+            <h2>Query Parameters</h2>
+            <div class="param" ng-repeat="param in currentRoute.query">
+                <div class="param-left flx flx-col">
+                    <div class="param-field">{{param.field}}</div>
+                    <div class="param-type">{{param.type}}</div>
+                </div>
+                <div class="param-right">
+                    <input class="param-value" ng-model="currentQuery[param.field]" type="text">
+                    <p class="param-desc">{{param.description}}</p>
+                </div>
+            </div>
+        </div>
+        <div id="api-body" ng-if="currentRoute.hasBody">
+            <div id="api-body-header" ng-if="currentRoute.id == 'services-iss-objects-v1-0-create'">
+                <h2>Body</h2>
+                <div class="spacer"></div>
+                <button class="clear" ng-click="clearFile()" ng-disabled="!hasCurrentBuffer">Clear File</button>
+                <button class="action" ng-click="selectFile()">Select File</button>
+            </div>
+            <div ui-ace="{
+                mode: 'json',
+                onLoad: aceLoaded
+            }" ng-model="current.body" ng-if="!hasCurrentBuffer"></div>
+            <div ng-if="hasCurrentBuffer">Buffer currently selected</div>
+        </div>
+        <div id="api-action" ng-if="currentRoute">
+            <div class="spacer"></div>
+            <button class="send" ng-click="send()" ladda="sendingRequest" ng-class="currentRoute.type">{{currentRoute.type}}</button>
+        </div>
+        <div id="api-status">
+            <div class="api-status-box success" ng-class="{'glow': successGlow}" ng-if="currentResultStatus === true"><i class="fa fa-check-circle"></i> <span>Success: {{statusCode}}</span></div>
+            <div class="api-status-box failure" ng-class="{'glow': successGlow}" ng-if="currentResultStatus === false"><i class="fa fa-exclamation-triangle"></i> <span>Failure: {{statusCode}}</span></div>
+        </div>
+        <div id="api-result" ng-if="currentResultString" ng-animate="{enter: 'animate-enter', leave: 'animate-leave'}">
+            <h2>Response</h2>
+            <div ui-ace="{
+                mode: 'json',
+                onLoad: aceLoaded
+            }" ng-model="currentResultString" ng-readonly="true"></div>
+        </div>
+        <a id="bottom"></a>
+    </div>
+</div>

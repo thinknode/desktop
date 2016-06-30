@@ -1,0 +1,116 @@
+/*
+ * Login Styling
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+#login-panel {
+    background: white;
+    border: 1px solid #d9d9d6;
+    border-radius: 4px;
+    box-shadow: 0 1px 0 rgba(37, 48, 54, 0.45);
+    margin-bottom: 20px;
+    padding: 40px 60px;
+    width: 500px;
+
+    #login-inner-panel {
+        margin-bottom: 20px;
+
+        #login-inner-panel-header {
+            h1 {
+                font-family: 'gotham-book', arial, sans-serif;
+            }
+
+            h2 {
+                color: $charcoal-lighter;
+                font-family: 'gotham-light', arial, sans-serif;
+                font-size: 1.1rem;
+                margin: 20px 0;
+            }
+            padding: 0 0 20px 0;
+            text-align: center;
+        }
+
+        #login-accounts:first-child {
+            border-top-right-radius: 4px;
+            border-top-left-radius: 4px;
+        }
+
+        #login-accounts:last-child {
+            border-bottom-right-radius: 4px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 1px 0 rgba(37, 48, 54, 0.45);
+            margin-bottom: 20px;
+        }
+
+        #login-accounts {
+            background: $offwhite;
+            border-left: 1px solid #d9d9d6;
+            border-right: 1px solid #d9d9d6;
+            border-top: 1px solid #d9d9d6;
+            padding: 20px;
+
+            > :first-child {
+                color: $charcoal-lighter;
+                font-size: .9rem;
+                font-family: 'gotham-light', arial, sans-serif;
+
+                > :first-child {
+                    font-family: 'gotham-medium', arial, sans-serif;
+                    margin-bottom: 5px;
+                }
+
+                span {
+                    display: block;
+                    margin-bottom: 0;
+                }
+            }
+
+            > :last-child {
+                width: 50px;
+                @include flexbox;
+                @include justify-content(center);
+                @include align-items(center);
+
+                i {
+                    color: $tan;
+                    font-size: 2rem;
+                    margin-bottom: 0;
+                }
+            }
+        }
+
+        #login-domain-form {
+        	text-align: center;
+            > :first-child {
+                color: $charcoal-lighter;
+                font-size: .9rem;
+                font-family: 'gotham-light', arial, sans-serif;
+
+                > :first-child {
+                    font-family: 'gotham-medium', arial, sans-serif;
+                    margin-bottom: 5px;
+                }
+
+                span {
+                    display: block;
+                    margin-bottom: 0;
+                }
+            }
+        }
+    }
+
+    #login-panel-footer {
+        text-align: center;
+        font-family: 'gotham-book', arial, sans-serif;
+    }
+}
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// Forgot Password Link
+
+.multi-signIn {
+    color: $blue;
+    font-size: 1rem;
+    text-decoration: none;
+}

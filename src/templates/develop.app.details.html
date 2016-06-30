@@ -1,0 +1,71 @@
+<div id="content-wrapper">
+    <div id="content-header" class="flx">
+        <h2>Details</h2>
+        <div class="spacer"></div>
+        <button class="send" ng-click="refresh()">Refresh</button>
+    </div>
+    <div id="content-body">
+    <form novalidate name="updateAppForm" ng-submit="updateAppForm.$valid && submit()" role="form" class="css-form">
+        <div class="flx flx-pull">
+            <div class="flx-item">
+                <div class="flx flx-2">
+                    <div class="flx-item">
+                        <span class="label">Name:</span>
+                        <input type="text" ng-class="{'error': updateAppForm.$submitted && updateAppForm.name.$invalid}" ng-pattern="/^[a-z0-9_.-]{1,32}$/" ng-model="update.app.name" name="name" placeholder="Name" readonly required />
+                        <div ng-if="updateAppForm.$submitted && updateAppForm.name.$invalid" class="flx flx-1 warning">
+                            <span ng-if="updateAppForm.name.$error.required">Name is required!</span>
+                            <span ng-if="updateAppForm.name.$error.maxlength">Name cannot be greater than 255 characters!</span>
+                            <span ng-if="updateAppForm.name.$error.pattern">
+                                Name is invalid! A valid name may be up to 32 characters and can only contain lowercase letters (a-z), numbers (0-9), underscores (_), periods (.), and hyphens (-).
+                            </span>
+                        </div>
+                    </div>
+                     <div class="flx-item">
+                        <span class="label">Display Name:</span>
+                        <input type="text" ng-class="{'error': updateAppForm.$submitted && updateAppForm.display_name.$invalid}" ng-minlength="1" ng-maxlength="45" ng-model="update.app.display_name" ng-value="update.app.display_name" name="display_name" placeholder="Display Name" required />
+                        <div ng-if="updateAppForm.$submitted && updateAppForm.display_name.$invalid" class="flx flx-1 warning">
+                            <span ng-if="updateAppForm.display_name.$error.required">Display name is required!</span>
+                            <span ng-if="updateAppForm.display_name.$error.minlength">Display name must be at least 1 character.</span>
+                            <span ng-if="updateAppForm.display_name.$error.maxlength">Display name cannot be greater than 45 characters.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flx flx-2">
+                    <div class="flx-item">
+                        <span class="label">Description:</span>
+                        <textarea type="text" ng-class="{'error': updateAppForm.$submitted && updateAppForm.description.$invalid}" ng-maxlength="255" ng-model="update.app.description" name="description" placeholder="Description" required>
+                        </textarea>
+                        <div ng-if="updateAppForm.$submitted && updateAppForm.description.$invalid" class="flx flx-1 warning add-bottom-twenty">
+                            <span ng-if="updateAppForm.description.$error.required">Description is required!</span>
+                            <span ng-if="updateAppForm.description.$error.maxlength">Description cannot be greater than 255 characters!</span>
+                        </div>
+                    </div>
+                    <div class="flx-item">
+                        <span class="label">Active:</span>
+                        <div class="select-wrapper">
+                            <select ng-model="update.app.active" ng-options="o.value as o.label for o in activeOptions"></select>
+                            <i class="fa fa-caret-down"></i>
+                        </div>
+                    </div>
+                </div>
+                <div class="flx flx-2">
+                    <div class="flx-item">
+                        <span class="label">Created At:</span>
+                        <input type="text" ng-value="update.app.created_at | date:'MMM. d, yyyy h:mm a'" readonly disabled>
+                    </div>
+                    <div class="flx-item">
+                        <span class="label">Updated At:</span>
+                        <input type="text" ng-value="update.app.updated_at | date:'MMM. d, yyyy h:mm a'" readonly disabled>
+                    </div>
+                </div>
+                <div class="section-header">
+                    <button type="submit" class="save" ng-class="{loading:update.processing}" ng-disabled="update.processing">
+                        <i class="fa fa-spinner fa-spin"></i>
+                        <span>Save</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+    </div>
+</div>

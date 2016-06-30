@@ -1,0 +1,92 @@
+<!-- -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- Main View -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<div id="content-wrapper">
+    <div id="content-header" class="flx">
+        <h2>Manage Apps</h2>
+        <div class="spacer"></div>
+        <button class="action" ng-click="createApp()">Create app</button>
+    </div>
+    <div id="content-body">
+        <table id="app-display" class="drk" cellspacing="0">
+            <tr>
+                <th>App Name</th>
+                <th>App Display Name</th>
+                <th>Path</th>
+                <th>Actions</th>
+            </tr>
+            <tr ng-repeat="app in apps" ng-class-even="'even-row'">
+                <td>{{app.name}}</td>
+                <td>{{app.display_name}}</td>
+                <td>{{app.path}}</td>
+                <td class="action-links">
+                    <a ng-show="app.path && !app.damaged" ng-click="openApp(app)">Open</a>
+                    <a ng-show="app.path" ng-click="unlinkApp(app)">Unlink</a>
+                    <a ng-hide="app.path" ng-click="linkApp(app)">Link</a>
+                    <a ng-show="app.damaged" ng-click="repairApp(app)">Repair</a>
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+<!-- -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- Create App Modal -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<div class="modal-backdrop" ng-if="create.visible">
+    <div class="modal-holder" autoscroll="false">
+        <div class="modal-box">
+            <p>Fill out the form below to create a new app.</p>
+            <form novalidate name="createAppForm" ng-submit="createAppForm.$valid && createAppSubmit()" role="form" class="css-form">
+                <div class="flx flx-1">
+                    <input type="text" ng-class="{'error': createAppForm.$submitted && createAppForm.name.$invalid}" ng-pattern="/^[a-z0-9_.-]{1,32}$/" ng-model="create.app.name" name="name" placeholder="Name" required />
+                </div>
+                <div ng-if="createAppForm.$submitted && createAppForm.name.$invalid" class="flx flx-1 warning">
+                    <span ng-if="createAppForm.name.$error.required">Name is required!</span>
+                    <span ng-if="createAppForm.name.$error.pattern">
+                        App name is invalid! A valid app name may be up to 32 characters and can only contain lowercase letters (a-z), numbers (0-9), underscores (_), periods (.), and hyphens (-).
+                    </span>
+                </div>
+                <div class="flx flx-1">
+                    <input type="text" ng-class="{'error': createAppForm.$submitted && createAppForm.display_name.$invalid}" ng-minlength="1" ng-maxlength="45" ng-model="create.app.display_name" name="display_name" placeholder="Display name" required />
+                </div>
+                <div ng-if="createAppForm.$submitted && createAppForm.display_name.$invalid" class="flx flx-1 warning">
+                    <span ng-if="createAppForm.display_name.$error.required">Display name is required!</span>
+                    <span ng-if="createAppForm.display_name.$error.pattern">
+                        Display name is invalid! A valid app display name may be up to 32 characters and can only contain lowercase letters (a-z), numbers (0-9), underscores (_), periods (.), and hyphens (-).
+                    </span>
+                </div>
+                <div class="flx flx-1">
+                    <input type="text" ng-class="{'error': createAppForm.$submitted && createAppForm.description.$invalid}" ng-maxlength="255" ng-model="create.app.description" name="description" placeholder="Description" required />
+                </div>
+                <div ng-if="createAppForm.$submitted && createAppForm.description.$invalid" class="flx flx-1 warning">
+                    <span ng-if="createAppForm.description.$error.required">Description is required!</span>
+                    <span ng-if="createAppForm.description.$error.maxlength">Description cannot be greater than 255 characters!</span>
+                </div>
+                <div class="form-actions flx">
+                    <button type="submit" ng-disabled="create.processing" class="cancel" ng-click="createAppCancel()">Cancel</button>
+                    <button type="submit" class="save" ng-class="{loading:create.processing}" ng-disabled="create.processing">
+                        <span>Create App</span>
+                        <i class="fa fa-spinner fa-spin"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- Link Warning Modal -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<div class="modal-backdrop" ng-if="link.visible">
+    <div class="modal-holder" autoscroll="false">
+        <div class="modal-box">
+            <p>The location you selected contains an existing manifest. Do you wish to keep the existing manifest or overwrite it with the master branch?</p>
+            <div class="form-actions flx">
+                <button class="cancel" ng-click="linkAppOverwrite()">Overwrite</button>
+                <button class="save" ng-click="linkAppKeep()">Keep existing</button>
+            </div>
+        </div>
+    </div>
+</div>

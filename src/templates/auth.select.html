@@ -1,0 +1,22 @@
+<div id="main">
+    <div id="login-panel" ng-cloak>
+        <div id="login-inner-panel">
+            <div id="login-inner-panel-header">
+                <h1>Choose an account</h1>
+            </div>
+            <div id="login-accounts" class="flx flx-push" ng-repeat="profile in profiles" ng-click="select($event, profile)">
+                <div class="flx-item">
+                    <span>{{profile.name}}</span>
+                    <span>{{profile.username}}@</span>
+                    <span>{{profile.host}}</span>
+                </div>
+                <div class="flx-item">
+                    <i class="fa fa-angle-right"></i>
+                </div>
+            </div>
+        </div>
+        <div id="login-panel-footer">
+            <a class="multi-signIn" ui-sref="auth.login">Add another account</a>
+        </div>
+    </div>
+</div>

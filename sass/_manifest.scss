@@ -1,0 +1,44 @@
+/*
+ * Manifest Styling
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+.manifest {
+    @include flexbox;
+    @include flex-direction(column);
+    height: 100vh;
+    width: 100%;
+
+    .manifest-header {
+        width: 100%;
+    }
+
+    .manifest-content {
+        @include flexbox;
+        @include align-items(stretch);
+        height: 100%;
+        width: 100%;
+
+        .items {
+            @include flexbox;
+            @include flex-direction(column);
+
+            .header {
+                @include flexbox;
+                @include flex-direction(row);
+            }
+        }
+
+        .details {
+            @include flexbox;
+            @include flex-direction(column);
+            width: 100%;
+
+            .ace_editor {
+                @include flex-grow(1);
+                min-height: 200px;
+            }
+        }
+    }
+}

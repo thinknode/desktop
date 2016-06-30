@@ -1,0 +1,28 @@
+<!-- -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<!-- Main View -->
+<!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+<div id="content-wrapper">
+    <div id="content-header" class="flx">
+        <h2>Dependencies</h2>
+    </div>
+    <div id="content-body">
+    	<div id="error-reports-wrapper">
+            <div id="report">
+                <div id="report-header">
+                    <i class="fa fa-exclamation-circle"></i>
+                    <span class="error-msg">Sorry, we don't yet support editing dependencies.</span>
+                </div>
+                <div id="report-body">
+                    <span>Don't worry though, you can still manually edit the dependencies in your manifest.json file.</span>
+                    <span>The manifest for this project is located in {{app.path}}.</span>
+                    <span>You can also use the following buttons to open the folder or edit the manifest:</span>
+                </div>
+                <div id="report-footer">
+                    <button class="action" ng-click="showManifestInFolder()">Open Folder</button>
+                    <button class="action" ng-click="editManifest()">Edit Manifest</button>
+                </div>
+            </div>
+    	</div>
+    </div>
+</div>

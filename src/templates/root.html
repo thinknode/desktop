@@ -1,0 +1,32 @@
+<div id="root" ng-controller="rootController" ng-init="init()">
+    <notifications-bar class="notifications" closeIcon="fa fa-times-circle"></notifications-bar>
+    <div id="root-nav">
+        <div id="session">
+            <span>Domain: {{ currentSession.account | limitTo: 10 }} {{ currentSession.account.length > 10 ? '...' : '' }}</span>
+            <span><i class="active-usr"></i>{{currentSession.user}}</span>
+        </div>
+        <span class="root-nav-heading">Explore</span>
+        <div class="root-nav-items">
+            <a ui-sref="devkit.api" angular-ripple>Thinknode API</a>
+            <!-- <a ui-sref="devkit.apps" angular-ripple>Apps</a> -->
+            <!-- <a ui-sref="devkit.calculations" angular-ripple>Calculations</a> -->
+        </div>
+        <!-- @if DEV=true -->
+        <span class="root-nav-heading">Develop</span>
+        <div class="root-nav-items" ng-repeat="app in openApps">
+            <a ui-sref="devkit.app.details({app: app.name})" angular-ripple>
+                <span>{{app.display_name}}</span>
+                <i class="fa fa-bolt" ng-show="app.debug"></i>
+                <i class="fa fa-times-circle-o" ng-click="closeApp($event, app)"></i>
+            </a>
+        </div>
+        <a ui-sref="devkit.apps" class="nav-link">Manage Apps...</a>
+        <!-- @endif -->
+        <div class="spacer"></div>
+        <div id="root-nav-actions">
+            <a ng-click="switch()" angular-ripple>Switch User</a>
+            <a class="temp-logout" ng-click="logout()" angular-ripple>Logout</a>
+        </div>
+    </div>
+    <div id="content" ui-view></div>
+</div>

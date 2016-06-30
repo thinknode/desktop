@@ -1,0 +1,31 @@
+/*
+ * Main Styling
+ *
+ * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ */
+
+#main {
+    @include flexbox;
+    @include flex-direction(column);
+    @include justify-content(center);
+    @include align-items(center);
+    background: $offwhite;
+    height: 100vh;
+    overflow: hidden;
+    min-height: 525px;
+    min-width: 575px;
+    padding-top: 50px;
+    width: 100%;
+}
+
+#root {
+    @include flexbox;
+    min-width: 600px;
+    height: 100vh;
+    position: relative;
+}
+
+.hbox {
+    @include flexbox;
+    width: 100%;
+}
