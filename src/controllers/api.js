@@ -128,6 +128,8 @@
             $scope.currentQuery.context = lastContext || "";
             $scope.currentResultString = "";
             $scope.showRoutes = false;
+            $scope.showRequestHeaders = false;
+            $scope.showResponseHeaders = false;
             $scope.hasCurrentBuffer = false;
             $scope.currentResultStatus = null;
             buf = null;
@@ -233,6 +235,15 @@
                 // If the user clicks the routes multiple times this prevents bindings from stacking
                 apiContent.unbind('click', handler);
             }
+        };
+        
+        $scope.clickRequestHeaders = function(event){
+            $scope.showRequestHeaders = !$scope.showRequestHeaders;
+            event.stopPropagation();
+        };
+        $scope.clickResponseHeaders = function(event){
+            $scope.showResponseHeaders = !$scope.showResponseHeaders;
+            event.stopPropagation();
         };
 
         /**
@@ -346,7 +357,7 @@
                     opts.data = $scope.current.body;
                 }
             }
-
+            
             // Issue http request
             $http(opts).then(function(res) {
                 $scope.currentResult = res.data;

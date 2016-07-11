@@ -8,9 +8,9 @@
 // errors
 
 @mixin error($border_color, $background_color, $color) {
-  border: 1px solid $border_color;
-  background-color: $background_color;
-  color: $color;
+    border: 1px solid $border_color;
+    background-color: $background_color;
+    color: $color;
 }
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -21,25 +21,25 @@
     color: white;
 
     > .type {
-      background: white;
-      border-radius:4px;
-      color: $color !important;
-      font-family: 'Gotham-Medium', arial, sans-serif;
-      line-height: 19px;
-      margin-right: 10px;
-      padding: 5px;
-      text-transform: uppercase;
+        background: white;
+        border-radius:4px;
+        color: $color !important;
+        font-family: 'Gotham-Medium', arial, sans-serif;
+        line-height: 19px;
+        margin-right: 10px;
+        padding: 5px;
+        text-transform: uppercase;
     }
 
     > .url {
-      line-height: 29px;
-      margin-right: 10px;
+        line-height: 29px;
+        margin-right: 10px;
     }
 
     > .title {
-      color: white;
-      font-size: .8rem;
-      line-height: 29px;
+        color: white;
+        font-size: .8rem;
+        line-height: 29px;
     }
 }
 
@@ -48,17 +48,39 @@
 
 @mixin glowAnimation($r, $g, $b, $name) {
     @keyframes #{$name} {
-      0%  { box-shadow: 0 0 22px 0 rgba($r,$g,$b,1); }
-      25% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0.75); }
-      50% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0.50); }
-      75% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0.25); }
-      100% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0); }
+        0%  { box-shadow: 0 0 22px 0 rgba($r,$g,$b,1); }
+        25% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0.75); }
+        50% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0.50); }
+        75% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0.25); }
+        100% { box-shadow: 0 0 22px 0 rgba($r,$g,$b,0); }
     }
 
     -webkit-animation: #{$name} 1s ease-in-out;
     -moz-animation: #{$name} 1s ease-in-out;
     -o-animation: #{$name} 1s ease-in-out;
     animation: #{$name} 1s ease-in-out;
+}
+
+@mixin headerTab() {
+    position:relative;
+    top:0px;
+    right:0px;
+    padding:5px 10px !important;
+    background: white;
+    border-radius: 4px;
+    font-weight:bold;
+    font-size: 12px;
+    cursor: pointer;
+    float:right;
+}
+
+@mixin headerContentPre(){
+    width:90%;
+    height:100%;
+    overflow-y: auto;
+    background-color: white;
+    display:block;
+    padding-left:10px;
 }
 
 #api {
@@ -99,7 +121,6 @@
             min-height: 54px;
             padding: 12px;
             position: relative;
-
             @include flexbox;
 
             i {
@@ -314,16 +335,39 @@
 
         #api-result {
             padding-bottom:20px;
-            h2 {
-                margin-bottom: 20px !important;
-                span {
-                    background: #f7f8f8;
-                    border-radius: 5px;
-                    display: inline-block;
-                    font-size: 15px;
-                    font-weight: lighter;
-                    line-height: 30px;
-                    padding: 0 10px;
+            table {
+                font-size: 1.0em;
+                tr {
+                    th, td {
+                        padding: 0;
+                        i.fa {
+                            font-size:1.2em;
+                        }
+                    }
+                }
+
+                h2 {
+                    margin-bottom: 20px !important;
+                    span {
+                        background: #f7f8f8;
+                        border-radius: 5px;
+                        display: inline-block;
+                        font-size: 15px;
+                        font-weight: lighter;
+                        line-height: 30px;
+                        padding: 0 10px;
+                    }
+                }
+                .headers-tab {
+                    @include headerTab();
+                }
+
+                .headers-content {
+                    max-height:125px;
+                    margin-bottom:10px;
+                }
+                .headers-content pre{
+                    @include headerContentPre();
                 }
             }
         }
@@ -339,6 +383,83 @@
 
         .ace_editor {
             min-height: 200px;
+            width:90%;
         }
     }
+}
+
+.headers-wrapper {
+    padding:0 !important;
+    margin-right: 20px;
+
+    i.fa {
+
+        font-size:1.2em;
+    }
+}
+
+.headers-content pre {
+    
+    @include headerContentPre();
+    margin-left:20px;
+}
+
+.headers-tab {
+    
+    @include headerTab();
+    
+    i {
+        margin-left: 10px;
+    }
+}
+
+.headers-tab {
+
+    &.get {
+        border:1px solid $get-bg !important;
+        color:$get-bg !important;
+    }
+}
+
+.headers-tab {
+
+    &.position {
+        border:1px solid $post-bg !important;
+    }
+}
+
+.headers-tab {
+
+    &.put {
+        border:1px solid $put-bg !important;
+    }
+}
+
+.headers-tab {
+
+    &.patch {
+        border:1px solid $patch-bg !important;
+    }
+}
+
+.headers-tab {
+
+    &.delete {
+        border:1px solid $delete-bg !important;
+    }
+}
+
+.headers-content {
+    max-height:125px;
+}
+
+.pre-headers {
+    border: 1px solid #d9d9d6;
+    border-radius: 4px;
+    font-family: "gotham-light", arial !important;
+    font-size: .8rem;
+    font-weight: lighter;
+    margin-bottom: 40px;
+    outline: none;
+    padding: 8px;
 }
