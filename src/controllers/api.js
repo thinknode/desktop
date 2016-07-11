@@ -11,7 +11,7 @@
     // Controller
 
     function apiController($scope, $session, $http, $docs, $sce, $document, $location, $anchorScroll) {
-
+        
         // --------------------------------------------------
         // Local variables
 
@@ -180,30 +180,14 @@
         };
 
         /**
-         * @summary Creates an endpoint url
+         * @summary Thin wrapper arround SessionProvider.url()
          * @param {string} route - The route to go to.
          * @param {object} params - The route params.
          * @param {object} query - The query params.
          * @returns {string} url - The complete route endpoint.
          */
         var url = function(route, params, query) {
-            var url = $session.api() + route;
-            for (var p in params) {
-                if (params.hasOwnProperty(p) && params[p] !== "") {
-                    url = url.replace('{:' + p + '}', params[p]);
-                    url = url.replace(':' + p, params[p]);
-                }
-            }
-            var queries = [];
-            for (var q in query) {
-                if (query.hasOwnProperty(q) && query[q] !== "") {
-                    queries.push(q + '=' + query[q].toString());
-                }
-            }
-            if (queries.length > 0) {
-                url += "?" + queries.join('&');
-            }
-            return url;
+            return $session.url(route, params, query);
         };
 
         // --------------------------------------------------
