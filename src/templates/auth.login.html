@@ -28,6 +28,7 @@
                 <input type="password" name="password" ng-model="data.password" placeholder="Password">
                 <div class="flx">
                     <button class="login" type="submit" value="Submit">Sign In</button>
+                    <span class="btn-error-message" ng-show="loginError">{{loginError}}</span>
                 </div>
             </form>
         </div>

@@ -25,7 +25,10 @@
             $environment.host(host);
             $session.login($scope.data.username, $scope.data.password).then(function() {
                 $state.go('devkit.api');
-            }, function() {
+            }, function(e) {
+                if (e.status === 401) {
+                    $scope.loginError = "Incorrect username and/or password.";
+                }
                 $state.go('auth.login');
             });
         };

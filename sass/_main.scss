@@ -29,3 +29,11 @@
     @include flexbox;
     width: 100%;
 }
+
+.btn-error-message {
+    color:$error-red;
+    font-size:13px;
+    margin-left:10px;
+    display:inline-block;
+    line-height:33px;
+}
