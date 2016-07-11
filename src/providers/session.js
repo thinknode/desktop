@@ -22,6 +22,7 @@
         var fs = require('fs');
         var fspath = require('path');
         var os = require('os');
+        var querystring = require('querystring');
 
         // --------------------------------------------------
         // Local variables
@@ -459,14 +460,9 @@
                     url = url.replace(':' + p, params[p]);
                 }
             }
-            var queries = [];
-            for (var q in query) {
-                if (query.hasOwnProperty(q) && query[q] !== "") {
-                    queries.push(q + '=' + query[q].toString());
-                }
-            }
-            if (queries.length > 0) {
-                url += "?" + queries.join('&');
+            var qs = querystring.stringify(query);
+            if (qs.length > 0) {
+                url += "?" + qs;
             }
             return url;
         };
