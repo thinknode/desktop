@@ -153,6 +153,7 @@
             // Interceptor
 
             $httpProvider.interceptors.push('authInterceptor');
+            $httpProvider.interceptors.push('headerHttpInterceptor');
             notificationsConfigProvider.setAcceptHTML(true);
             ladda.setOption({
                 style: 'expand-right',

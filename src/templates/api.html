@@ -5,7 +5,7 @@
         <div class="module"
              ng-repeat="module in service.modules" ng-click="selectModule($event, service.id, module.id)"
              ng-class="{active: module.name == currentModule.name}"
-        >
+             >
 
             {{module.name}}
         </div>
@@ -18,7 +18,7 @@
             <span class="url">{{currentRoute.url}}</span>
             <span class="title">({{currentRoute.title}})</span>
             <div class="spacer"></div>
-            <i class="fa fa-chevron-circle-down"></i>
+            <i class="fa" ng-class="{'fa-chevron-circle-up': showRoutes, 'fa-chevron-circle-down': !showRoutes}"></i>
             <div id="api-route-dropdown" ng-show="showRoutes">
                 <div class="dropdown-resource" ng-repeat="resource in currentModule.resources">
                     <span>{{resource.name}}</span>
@@ -29,7 +29,29 @@
                     </div>
                 </div>
             </div>
+
         </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>
+                        <div class="headers-tab" ng-click='clickRequestHeaders($event)' ng-class="currentRoute.type">
+                            Headers <i class="fa"  ng-class="{'fa-chevron-circle-up': showRequestHeaders, 'fa-chevron-circle-down': !showRequestHeaders}"></i>
+                        </div>
+                    </th>
+                </tr>
+                <tr>
+                    <th colspan='2'>
+                        <div ng-hide='!showRequestHeaders' class='headers-content' ng-class="currentRoute.type">
+                            <pre class="pre-headers">{{requestHeaders}}</pre>
+                        </div>
+                    </th>
+                </tr>
+            </thead>
+        </table>
+
         <div id="api-route-params" ng-if="currentRoute.params">
             <h2>Route Parameters</h2>
             <div class="param" ng-repeat="param in currentRoute.params">
@@ -64,9 +86,9 @@
                 <button class="action" ng-click="selectFile()">Select File</button>
             </div>
             <div ui-ace="{
-                mode: 'json',
-                onLoad: aceLoaded
-            }" ng-model="current.body" ng-if="!hasCurrentBuffer"></div>
+                 mode: 'json',
+                 onLoad: aceLoaded
+                 }" ng-model="current.body" ng-if="!hasCurrentBuffer"></div>
             <div ng-if="hasCurrentBuffer">Buffer currently selected</div>
         </div>
         <div id="api-action" ng-if="currentRoute">
@@ -78,11 +100,35 @@
             <div class="api-status-box failure" ng-class="{'glow': successGlow}" ng-if="currentResultStatus === false"><i class="fa fa-exclamation-triangle"></i> <span>Failure: {{statusCode}}</span></div>
         </div>
         <div id="api-result" ng-if="currentResultString" ng-animate="{enter: 'animate-enter', leave: 'animate-leave'}">
-            <h2>Response</h2>
-            <div ui-ace="{
-                mode: 'json',
-                onLoad: aceLoaded
-            }" ng-model="currentResultString" ng-readonly="true"></div>
+            <table>
+                <thead>
+                    <tr>
+                        <th><h2>Response</h2></th>
+                        <th>
+                            <div class="headers-tab" ng-click='clickResponseHeaders($event)' ng-class="currentRoute.type">
+                                Headers <i class="fa"  ng-class="{'fa-chevron-circle-up': showResponseHeaders, 'fa-chevron-circle-down': !showResponseHeaders}"></i>
+                            </div>
+                        </th>
+                    </tr>
+                    <tr>
+                        <th colspan='2'>
+                            <div ng-hide='!showResponseHeaders' class='headers-content' ng-class="currentRoute.type">
+                                <pre class="pre-headers">{{responseHeaders}}</pre>
+                            </div>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan='2'>
+                            <div  ui-ace="{
+                                 mode: 'json',
+                                 onLoad: aceLoaded
+                                 }" ng-model="currentResultString" ng-readonly="true"></div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
         <a id="bottom"></a>
     </div>
