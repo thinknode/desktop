@@ -10,7 +10,7 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Factory
 
-    function supervisorFactory($environment, $session, $manifest, $rootScope, $http) {
+    function supervisorFactory(environment, session, $manifest, $rootScope, $http) {
 
         // --------------------------------------------------
         // Required modules
@@ -30,7 +30,7 @@
 
         var ure = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
-        var calculations = $environment.db().getSchema().table('calculations');
+        var calculations = environment.db().getSchema().table('calculations');
 
         var error_templates = {
             "invalid_buffer_state": "Received extraneous data in buffer given current state",
@@ -662,22 +662,22 @@
             bluebird.bind(this).then(function() {
                 var self = this;
                 return new bluebird(function(resolve, reject) {
-                    var stream = self._output.pipe(fs.createWriteStream($environment.cache(uuid)));
+                    var stream = self._output.pipe(fs.createWriteStream(environment.cache(uuid)));
                     stream.on('close', resolve);
                     stream.on('error', reject);
                 });
             }).then(function() {
                 var self = this;
                 return new bluebird(function(resolve, reject) {
-                    fs.createReadStream($environment.cache(uuid)).pipe(request({
+                    fs.createReadStream(environment.cache(uuid)).pipe(request({
                         method: "POST",
-                        url: $session.url('/iss/:type', {
+                        url: session.url('/iss/:type', {
                             'type': type
                         }, {
                             'context': self._context
                         }, true),
                         headers: {
-                            'Authorization': 'Bearer ' + $session.token(),
+                            'Authorization': 'Bearer ' + session.token(),
                             'Content-type': 'application/octet-stream'
                         }
                     }, function(err, response, body) {
@@ -698,8 +698,8 @@
                 });
             }).then(function(res) {
                 this._calculation.id = res.id;
-                var src = $environment.cache(this._calculation.uuid);
-                var dest = $environment.cache(this._calculation.id);
+                var src = environment.cache(this._calculation.uuid);
+                var dest = environment.cache(this._calculation.id);
                 return fs.copyAsync(src, dest);
             }).then(function() {
                 this._notify('debug', 'Done reading result from provider');
@@ -759,7 +759,7 @@
                     // Lookup remote id from local uuid
                     return bluebird.bind(this).then(function() {
                         var filter = calculations.uuid.eq(arg.reference);
-                        return $environment.db()
+                        return environment.db()
                             .select(calculations.id)
                             .from(calculations)
                             .where(filter)
@@ -769,25 +769,25 @@
                         return rows[0].id;
                     });
                 }).then(function(id) {
-                    return fs.statAsync($environment.cache(id)).catch(function(err) {
+                    return fs.statAsync(environment.cache(id)).catch(function(err) {
                         /* jshint newcap: false */
                         return new bluebird(function(resolve, reject) {
                             var stream = request({
                                 "method": "GET",
-                                "url": $session.url('/iss/:id', {
+                                "url": session.url('/iss/:id', {
                                     "id": id
                                 }, {
                                     "context": self._context
                                 }, true),
                                 "headers": {
-                                    "Authorization": 'Bearer ' + $session.token(),
+                                    "Authorization": 'Bearer ' + session.token(),
                                     "Accept": 'application/octet-stream'
                                 }
-                            }).pipe(fs.createWriteStream($environment.cache(id)));
+                            }).pipe(fs.createWriteStream(environment.cache(id)));
                             stream.on('close', resolve);
                             stream.on('error', reject);
                         }).then(function() {
-                            return fs.statAsync($environment.cache(id));
+                            return fs.statAsync(environment.cache(id));
                         });
                     }).then(function(stats) {
                         arg.size = stats.size;
@@ -824,7 +824,7 @@
 
                 // Stream argument value to provider
                 return bluebird.bind(this).then(function() {
-                    return fs.createReadStream($environment.cache(arg.reference));
+                    return fs.createReadStream(environment.cache(arg.reference));
                 }).then(function(stream) {
                     return new bluebird(function(resolve, reject) {
                         stream.on("data", function(chunk) {
@@ -952,8 +952,8 @@
     // Register factory
 
     angular.module('app').factory('Supervisor', [
-        '$environment',
-        '$session',
+        'environment',
+        'session',
         '$manifest',
         supervisorFactory
     ]);

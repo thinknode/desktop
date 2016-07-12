@@ -10,20 +10,18 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function appDebugController($session, $state, $scope, $proxy, $http, $logger) {
+    function appDebugController($rootScope, session, $state, $scope, $proxy, $http, $logger) {
 
         // --------------------------------------------------
         // Required modules
 
         var _ = require('lodash');
         var bluebird = require('bluebird');
-        var fs = bluebird.promisifyAll(require('fs'));
-        var fspath = require('path');
 
         // --------------------------------------------------
         // Local variables
 
-        var namespace = $session.namespace();
+        var namespace = session.namespace();
         var app = $state.params.app;
         var branchKey = namespace + ".debug." + app + ".branch";
         var realmKey = namespace + ".debug." + app + ".realm";
@@ -37,7 +35,7 @@
          */
         function close() {
             $proxy.close().then(function() {
-                $session.debug(false, app);
+                session.debug(false, app);
                 $scope.$apply();
             });
         }
@@ -59,15 +57,15 @@
         function listen() {
             $http({
                 "method": 'GET',
-                "url": $session.url('/iam/realms/:realm/branches', {
+                "url": session.url('/iam/realms/:realm/branches', {
                     "realm": $scope.realm.name
                 }),
                 "headers": {
-                    "Authorization": 'Bearer ' + $session.token()
+                    "Authorization": 'Bearer ' + session.token()
                 }
             }).then(function(res) {
                 var installed = _.findWhere(res.data, {
-                    "account": $session.current().domain,
+                    "account": session.current().domain,
                     "app": app
                 });
                 if (!installed) {
@@ -79,23 +77,23 @@
             }).then(function() {
                 return $http({
                     "method": 'GET',
-                    "url": $session.url('/iam/realms/:realm/context', {
+                    "url": session.url('/iam/realms/:realm/context', {
                         "realm": $scope.realm.name
                     }),
                     "headers": {
-                        "Authorization": 'Bearer ' + $session.token()
+                        "Authorization": 'Bearer ' + session.token()
                     }
                 });
             }).then(function(res) {
                 return $proxy.listen({
-                    "account": $session.current().domain,
+                    "account": session.current().domain,
                     "app": app,
                     "context": res.data.id,
                     "port": $scope.port,
                     "callback": $scope.notify
                 });
             }).then(function() {
-                $session.debug('http://localhost:4345', app);
+                session.debug('http://localhost:4345', app);
             }).catch(ignore);
         }
 
@@ -170,7 +168,7 @@
         $scope.clearCache = function() {
             $logger.append('debug', 'Clearing calculation cache');
             $scope.clearing = true;
-            $session.clearCache().then(function() {
+            session.clearCache().then(function() {
                 return $proxy.clear();
             }).then(function() {
                 $logger.append('debug', 'Cache cleared');
@@ -204,12 +202,12 @@
             }
             $http({
                 "method": 'GET',
-                "url": $session.url('/apm/apps/:account/:app/branches', {
-                    "account": $session.current().domain,
+                "url": session.url('/apm/apps/:account/:app/branches', {
+                    "account": session.current().domain,
                     "app": $state.params.app
                 }),
                 "headers": {
-                    "Authorization": 'Bearer ' + $session.token()
+                    "Authorization": 'Bearer ' + session.token()
                 }
             }).then(function(res) {
                 $scope.branches = res.data;
@@ -228,11 +226,11 @@
                 localStorage.setItem(branchKey, $scope.branch.name);
                 return $http({
                     "method": 'GET',
-                    "url": $session.url('/iam/realms', null, {
+                    "url": session.url('/iam/realms', null, {
                         "development": true
                     }),
                     "headers": {
-                        "Authorization": 'Bearer ' + $session.token()
+                        "Authorization": 'Bearer ' + session.token()
                     }
                 });
             }).then(function(res) {
@@ -254,6 +252,7 @@
                 } else {
                     localStorage.removeItem(realmKey);
                 }
+                $scope.$apply();
             });
         };
 
@@ -263,14 +262,14 @@
         $scope.installBranch = function() {
             return $http({
                 method: 'PUT',
-                url: $session.url('/iam/realms/:realm/branches/:account/:app/:branch', {
+                url: session.url('/iam/realms/:realm/branches/:account/:app/:branch', {
                     'realm': $scope.realm.name,
-                    'account': $session.current().domain,
+                    'account': session.current().domain,
                     'app': $state.params.app,
                     'branch': $scope.branch.name
                 }),
                 headers: {
-                    'Authorization': 'Bearer ' + $session.token()
+                    'Authorization': 'Bearer ' + session.token()
                 }
             }).then(function() {
                 var resolve = $scope.install.resolve;
@@ -288,26 +287,26 @@
         $scope.installBranchForce = function() {
             return $http({
                 "method": 'DELETE',
-                "url": $session.url('/iam/realms/:realm/branches/:account/:app/:branch', {
+                "url": session.url('/iam/realms/:realm/branches/:account/:app/:branch', {
                     "realm": $scope.realm.name,
-                    "account": $session.current().domain,
+                    "account": session.current().domain,
                     "app": $state.params.app,
                     "branch": $scope.installForce.current
                 }),
                 "headers": {
-                    "Authorization": 'Bearer ' + $session.token()
+                    "Authorization": 'Bearer ' + session.token()
                 }
             }).then(function() {
                 $http({
                     "method": 'PUT',
-                    "url": $session.url('/iam/realms/:realm/branches/:account/:app/:branch', {
+                    "url": session.url('/iam/realms/:realm/branches/:account/:app/:branch', {
                         "realm": $scope.realm.name,
-                        "account": $session.current().domain,
+                        "account": session.current().domain,
                         "app": $state.params.app,
                         "branch": $scope.branch.name
                     }),
                     "headers": {
-                        "Authorization": 'Bearer ' + $session.token()
+                        "Authorization": 'Bearer ' + session.token()
                     }
                 });
             }).then(function() {
@@ -383,14 +382,15 @@
         // --------------------------------------------------
         // Initialization
 
-        $scope.init();
+        $rootScope.$on('initialized', $scope.init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('appDebugController', [
-        '$session',
+        '$rootScope',
+        'session',
         '$state',
         '$scope',
         '$proxy',

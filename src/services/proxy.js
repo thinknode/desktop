@@ -20,7 +20,7 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Service
 
-    function proxyService($environment, $session, $manifest, $rootScope, $http, $logger, Supervisor) {
+    function proxyService(environment, session, $manifest, $rootScope, $http, $logger, Supervisor) {
         /* jshint validthis: true */
 
         var service = this;
@@ -123,7 +123,7 @@
             if (ure.test(req.params.id)) {
                 bluebird.resolve().then(function() {
                     var filter = calculations.uuid.eq(req.params.id);
-                    return $environment.db()
+                    return environment.db()
                         .select(calculations.request)
                         .from(calculations)
                         .where(filter)
@@ -146,7 +146,7 @@
             if (ure.test(req.params.id)) {
                 bluebird.resolve().then(function() {
                     var filter = calculations.uuid.eq(req.params.id);
-                    return $environment.db()
+                    return environment.db()
                         .select(calculations.status)
                         .from(calculations)
                         .where(filter)
@@ -177,7 +177,7 @@
             if (ure.test(req.params.id)) {
                 bluebird.resolve().then(function() {
                     var filter = calculations.uuid.eq(req.params.id);
-                    return $environment.db()
+                    return environment.db()
                         .select(calculations.id)
                         .from(calculations)
                         .where(filter)
@@ -226,7 +226,7 @@
         // --------------------------------------------------
         // Private variables
 
-        var calculations = $environment.db().getSchema().table('calculations');
+        var calculations = environment.db().getSchema().table('calculations');
         var backlog = [];
 
         // --------------------------------------------------
@@ -238,7 +238,7 @@
             return bluebird.bind(proc).then(function() {
                 if (this.item.dependencies.length > 0) {
                     return bluebird.bind(this).then(function() {
-                        return $environment.db().select().from(calculations)
+                        return environment.db().select().from(calculations)
                             .where(calculations.uuid.in(this.item.dependencies))
                             .exec();
                     }).then(function(rows) {
@@ -254,7 +254,7 @@
                 }
             }).then(function(success) {
                 if (!success) {
-                    return $environment.db().update(calculations)
+                    return environment.db().update(calculations)
                         .set(calculations.status, 'failed')
                         .where(calculations.uuid.eq(this.item.uuid))
                         .exec();
@@ -281,13 +281,13 @@
                             }).each(function(arg) {
                                 return $http({
                                     "method": 'POST',
-                                    "url": $session.url('/iss/:type', {
+                                    "url": session.url('/iss/:type', {
                                         "type": arg.schema
                                     }, {
                                         "context": service.info.context
                                     }, true),
                                     "headers": {
-                                        "Authorization": 'Bearer ' + $session.token(),
+                                        "Authorization": 'Bearer ' + session.token(),
                                         "Content-Type": 'application/json'
                                     },
                                     "data": JSON.stringify(arg.value)
@@ -301,7 +301,7 @@
                     }).then(function() {
                         if (this.item.status === 'unresolved') {
                             this.item.status = 'resolved';
-                            return $environment.db().update(calculations)
+                            return environment.db().update(calculations)
                                 .set(calculations.status, 'resolved')
                                 .set(calculations.request, this.item.request)
                                 .where(calculations.uuid.eq(this.item.uuid))
@@ -311,12 +311,12 @@
                         return supervisor.stage(this.item);
                     }).then(function() {
                         if (this.item.failure) {
-                            return $environment.db().update(calculations)
+                            return environment.db().update(calculations)
                                 .set(calculations.status, 'failed')
                                 .where(calculations.uuid.eq(this.item.uuid))
                                 .exec();
                         } else {
-                            return $environment.db().update(calculations)
+                            return environment.db().update(calculations)
                                 .set(calculations.status, 'completed')
                                 .set(calculations.id, this.item.id)
                                 .where(calculations.uuid.eq(this.item.uuid))
@@ -338,7 +338,7 @@
                 if (this.item.dependencies.length > 0) {
                     this.item.lookup = {};
                     return bluebird.bind(this).then(function() {
-                        return $environment.db().select().from(calculations)
+                        return environment.db().select().from(calculations)
                             .where(calculations.uuid.in(this.item.dependencies))
                             .exec();
                     }).then(function(rows) {
@@ -355,7 +355,7 @@
                 }
             }).then(function(success) {
                 if (!success) {
-                    return $environment.db().update(calculations)
+                    return environment.db().update(calculations)
                         .set(calculations.status, 'failed')
                         .where(calculations.uuid.eq(this.item.uuid))
                         .exec();
@@ -412,11 +412,11 @@
                     }).then(function() {
                         return $http({
                             "method": 'POST',
-                            "url": $session.url('/calc', null, {
+                            "url": session.url('/calc', null, {
                                 "context": service.info.context
                             }, true),
                             "headers": {
-                                "Authorization": 'Bearer ' + $session.token(),
+                                "Authorization": 'Bearer ' + session.token(),
                                 "Content-Type": 'application/json'
                             },
                             "data": this.item.request
@@ -425,20 +425,20 @@
                         this.id = res.data.id;
                         return $http({
                             "method": 'GET',
-                            "url": $session.url('/calc/:id', {
+                            "url": session.url('/calc/:id', {
                                 "id": this.id
                             }, {
                                 "context": service.info.context
                             }, true),
                             "headers": {
-                                "Authorization": 'Bearer ' + $session.token()
+                                "Authorization": 'Bearer ' + session.token()
                             }
                         });
                     }).then(function(res) {
                         this.request = res.data;
                         return waitForFinished(this.id);
                     }).then(function() {
-                        return $environment.db().update(calculations)
+                        return environment.db().update(calculations)
                             .set(calculations.status, 'completed')
                             .set(calculations.id, this.id)
                             .set(calculations.request, this.request)
@@ -791,7 +791,7 @@
                     "hash": this.hash,
                     "status": "unresolved"
                 });
-                return $environment.db().insert().into(calculations).values([row]).exec();
+                return environment.db().insert().into(calculations).values([row]).exec();
             }).catch(function(err) {
                 if (err.code !== 201) {
                     throw err;
@@ -800,7 +800,7 @@
                 // Select existing calculation if duplicate is found
                 return bluebird.bind(this).then(function() {
                     var filter = calculations.hash.eq(this.hash);
-                    return $environment.db().select().from(calculations).where(filter).exec();
+                    return environment.db().select().from(calculations).where(filter).exec();
                 }).then(function(rows) {
                     item.uuid = rows[0].uuid;
                     item.status = rows[0].status;
@@ -822,14 +822,14 @@
             count = count || 0;
             return $http({
                 method: 'GET',
-                url: $session.url('/calc/:id/status', {
+                url: session.url('/calc/:id/status', {
                     'id': id
                 }, {
                     'context': service.info.context,
                     'status': 'completed'
                 }, true),
                 headers: {
-                    'Authorization': 'Bearer ' + $session.token()
+                    'Authorization': 'Bearer ' + session.token()
                 }
             }).then(function(res) {
                 if (typeof res.data.completed === 'undefined') {
@@ -897,7 +897,7 @@
             }).then(function() {
                 this.info.enabled = true;
                 this.info.state = "waiting";
-                this.info.target = $session.api();
+                this.info.target = session.api();
                 this.info.account = config.account;
                 this.info.app = config.app;
                 this.info.context = config.context;
@@ -931,8 +931,8 @@
     // Register service
 
     angular.module('app').service('$proxy', [
-        '$environment',
-        '$session',
+        'environment',
+        'session',
         '$manifest',
         '$rootScope',
         '$http',

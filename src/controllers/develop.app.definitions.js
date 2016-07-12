@@ -10,25 +10,12 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function appDefinitionsController($environment, $session, $state, $params, $scope, $manifest) {
+    function appDefinitionsController($rootScope, $params, $scope, $manifest) {
 
         // --------------------------------------------------
         // Required modules
 
         var _ = require('lodash');
-        var bluebird = require('bluebird');
-        var fs = bluebird.promisifyAll(require('fs'));
-        var fspath = require('path');
-        var remote = require('remote');
-        var dialog = remote.require('dialog');
-
-        // --------------------------------------------------
-        // Local variables
-
-        var apps = $environment.db().getSchema().table('apps');
-
-        // --------------------------------------------------
-        // Local functions
 
         // --------------------------------------------------
         // Scope variables
@@ -157,15 +144,20 @@
 
         // --------------------------------------------------
         // Initialization
-
+        
+        function init() {
+            // Initializtion logic that depends on environment or session services goes here
+        }
+        
+        $rootScope.$on('initilized', init);
+        
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('appDefinitionsController', [
-        '$environment',
-        '$session',
+        '$rootScope',
         '$state',
         '$stateParams',
         '$scope',

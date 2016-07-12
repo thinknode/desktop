@@ -10,7 +10,7 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function apiController($scope, $session, $http, $docs, $sce, $document, $location, $anchorScroll) {
+    function apiController($scope, session, $http, $docs, $sce, $document, $location, $anchorScroll, $rootScope) {
         
         // --------------------------------------------------
         // Local variables
@@ -68,7 +68,7 @@
                 }
             }
 
-            $scope.currentSession = $session.current();
+            $scope.currentSession = session.current();
             $scope.current = {
                 body: ""
             };
@@ -189,7 +189,7 @@
          * @returns {string} url - The complete route endpoint.
          */
         var url = function(route, params, query) {
-            return $session.url(route, params, query);
+            return session.url(route, params, query);
         };
 
         // --------------------------------------------------
@@ -344,7 +344,7 @@
                 method: $scope.currentRoute.type,
                 url: url($scope.currentRoute.url, $scope.currentParams, $scope.currentQuery),
                 headers: {
-                    "Authorization": "Bearer " + $session.token()
+                    "Authorization": "Bearer " + session.token()
                 }
             };
             if ($scope.currentRoute.hasBody) {
@@ -391,8 +391,7 @@
 
         // --------------------------------------------------
         // Initialization
-
-        init();
+        $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -400,13 +399,14 @@
 
     angular.module('app').controller('apiController', [
         '$scope',
-        '$session',
+        'session',
         '$http',
         '$docs',
         '$sce',
         '$document',
         '$location',
         '$anchorScroll',
+        '$rootScope',
         apiController
     ]);
 })();

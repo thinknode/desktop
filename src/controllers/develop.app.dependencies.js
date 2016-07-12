@@ -10,13 +10,11 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function appDependenciesController($session, $state, $params, $scope, $manifest) {
+    function appDependenciesController($rootScope, $scope, $manifest) {
 
         // --------------------------------------------------
         // Required modules
 
-        var _ = require('lodash');
-        var bluebird = require('bluebird');
         var fspath = require('path');
         var remote = require('remote');
         var shell = remote.require('shell');
@@ -43,15 +41,19 @@
 
         // --------------------------------------------------
         // Initialization
+        
+        function init() {
+            // Initializtion logic that depends on environment or session services goes here
+        }
+        
+        $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('appDependenciesController', [
-        '$session',
-        '$state',
-        '$stateParams',
+        '$rootScope',
         '$scope',
         '$manifest',
         appDependenciesController

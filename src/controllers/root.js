@@ -10,36 +10,25 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function rootController($state, $scope, $session, $http, $sce, notifications) {
-
-        // --------------------------------------------------
-        // Local variables
-
-        var fs = require('fs');
-        var request = require('request');
-        var remote = require('remote');
-        var dialog = remote.require('dialog');
-
-        // --------------------------------------------------
-        // Local functions
+    function rootController($rootScope, $state, $scope, session, $http, $sce, notifications) {
 
         // --------------------------------------------------
         // Scope methods
 
         $scope.logout = function() {
-            $session.logout();
+            session.logout();
             $state.go('auth.select');
         };
 
         $scope.switch = function() {
-            $session.switch();
+            session.switch();
             $state.go('auth.select');
         };
 
         $scope.closeApp = function($event, app) {
             $event.stopPropagation();
             $event.preventDefault();
-            var empty = $session.closeApp(app.name);
+            var empty = session.closeApp(app.name);
             if (empty) {
                 $state.go('devkit.apps');
             } else {
@@ -71,19 +60,23 @@
 
         // --------------------------------------------------
         // Initialization
-
-        $scope.currentSession = $session.current();
-
-        $scope.openApps = $session.openApps;
+        
+        function init(){
+            $scope.currentSession = session.current();
+            $scope.openApps = session.openApps;
+            $scope.$apply();
+        }
+        $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('rootController', [
+        '$rootScope',
         '$state',
         '$scope',
-        '$session',
+        'session',
         '$http',
         '$sce',
         'notifications',

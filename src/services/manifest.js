@@ -10,7 +10,7 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Service
 
-    function manifestService($session, $rootScope) {
+    function manifestService(session, $rootScope) {
         /* jshint validthis: true */
 
         // --------------------------------------------------
@@ -182,5 +182,5 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register service
 
-    angular.module('app').service('$manifest', ['$session', '$rootScope', manifestService]);
+    angular.module('app').service('$manifest', ['session', '$rootScope', manifestService]);
 })();

@@ -10,7 +10,7 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function appDetailsController($environment, $session, $state, $params, $scope, $http) {
+    function appDetailsController($rootScope, session, $params, $scope, $http) {
 
         // --------------------------------------------------
         // Required modules
@@ -50,12 +50,12 @@
         $scope.refresh = function() {
             return $http({
                 method: 'GET',
-                url: $session.url('/apm/apps/:account/:app', {
-                    'account': $session.current().domain,
+                url: session.url('/apm/apps/:account/:app', {
+                    'account': session.current().domain,
                     'app': $params.app
                 }),
                 headers: {
-                    'Authorization': 'Bearer ' + $session.token()
+                    'Authorization': 'Bearer ' + session.token()
                 }
             }).then(function(res) {
                 $scope.app = res.data;
@@ -76,18 +76,18 @@
             $scope.update.processing = true;
             return $http({
                 method: 'PATCH',
-                url: $session.url('/apm/apps/:account/:app', {
-                    'account': $session.current().domain,
+                url: session.url('/apm/apps/:account/:app', {
+                    'account': session.current().domain,
                     'app': $params.app
                 }),
                 headers: {
-                    'Authorization': 'Bearer ' + $session.token(),
+                    'Authorization': 'Bearer ' + session.token(),
                     'Content-Type': 'application/json'
                 },
                 data: body
             }).then(function(res) {
                 $scope.app = res.data;
-                return $session.updateApp(res.data);
+                return session.updateApp(res.data);
             }).then(function() {
                 $scope.update.app = $scope.app;
                 $scope.update.processing = false;
@@ -96,17 +96,22 @@
 
         // --------------------------------------------------
         // Initialization
-
-        $scope.refresh();
+        
+        function init() {
+            $scope.refresh().then(function(){
+                $scope.$apply();
+            });
+        }
+        
+        $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('appDetailsController', [
-        '$environment',
-        '$session',
-        '$state',
+        '$rootScope',
+        'session',
         '$stateParams',
         '$scope',
         '$http',
