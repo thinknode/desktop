@@ -4,28 +4,28 @@
  * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
  */
 
-(function() {
+(function () {
     'use strict';
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function authLoginController($state, $stateParams, $scope, $environment, $session) {
+    function authLoginController($rootScope, $state, $stateParams, $scope, environment, session) {
 
         // --------------------------------------------------
         // Scope methods
 
-        $scope.submit = function() {
+        $scope.submit = function () {
             var host;
             if ($scope.isCustomHost) {
                 host = $scope.data.host;
             } else {
                 host = $scope.data.account + '.thinknode.io';
             }
-            $environment.host(host);
-            $session.login($scope.data.username, $scope.data.password).then(function() {
+            environment.host(host);
+            session.login($scope.data.username, $scope.data.password).then(function () {
                 $state.go('devkit.api');
-            }, function(e) {
+            }, function (e) {
                 if (e.status === 401) {
                     $scope.loginError = "Incorrect username and/or password.";
                 }
@@ -33,7 +33,7 @@
             });
         };
 
-        $scope.toggleCustomHost = function($event) {
+        $scope.toggleCustomHost = function ($event) {
             if (!$scope.isCustomHost && !$scope.host && $scope.account) {
                 $scope.host = $scope.account + '.thinknode.io';
             }
@@ -46,11 +46,9 @@
 
         $scope.isProfile = false;
         $scope.isCustomHost = false;
-        $scope.hasCredentials = $environment.hasCredentials();
         $scope.data = {
             "account": ''
         };
-
         if (typeof $stateParams.username === 'string') {
             $scope.isProfile = true;
             $scope.isCustomHost = true;
@@ -58,17 +56,24 @@
             $scope.data.username = $stateParams.username;
             $scope.data.host = decodeURIComponent($stateParams.host);
         }
+        function init() {
+            $scope.hasCredentials = environment.hasCredentials();
+            $scope.$apply();
+        }
+
+        $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('authLoginController', [
+        '$rootScope',
         '$state',
         '$stateParams',
         '$scope',
-        '$environment',
-        '$session',
+        'environment',
+        'session',
         authLoginController
     ]);
 })();

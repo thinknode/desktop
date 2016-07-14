@@ -10,7 +10,7 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function appsController($environment, $session, $state, $scope, $http) {
+    function appsController($rootScope, session, $state, $scope) {
 
         // --------------------------------------------------
         // Required modules
@@ -21,10 +21,6 @@
         var remote = require('remote');
         var dialog = remote.require('dialog');
 
-        // --------------------------------------------------
-        // Local variables
-
-        var apps = $environment.db().getSchema().table('apps');
 
         // --------------------------------------------------
         // Scope variables
@@ -67,11 +63,11 @@
                     if (err.code !== 'ENOENT') {
                         throw err;
                     }
-                    return $session.getBranch(app.name, "master", true).then(function(branch) {
+                    return session.getBranch(app.name, "master", true).then(function(branch) {
                         app.commit = branch.commit;
-                        return $session.saveManifest(app.path, branch.manifest);
+                        return session.saveManifest(app.path, branch.manifest);
                     }).then(function() {
-                        return $session.registerApp(app);
+                        return session.registerApp(app);
                     });
                 }).then(function() {
                     $scope.$apply();
@@ -84,9 +80,9 @@
          */
         $scope.linkAppKeep = function() {
             var app = $scope.link.app;
-            $session.getBranch(app.name, "master").then(function(branch) {
+            session.getBranch(app.name, "master").then(function(branch) {
                 app.commit = branch.commit;
-                return $session.registerApp(app);
+                return session.registerApp(app);
             }).then(function() {
                 $scope.link.visible = false;
                 $scope.link.app = null;
@@ -99,11 +95,11 @@
          */
         $scope.linkAppOverwrite = function() {
             var app = $scope.link.app;
-            $session.getBranch(app.name, "master", true).then(function(branch) {
+            session.getBranch(app.name, "master", true).then(function(branch) {
                 app.commit = branch.commit;
-                return $session.saveManifest(app.path, branch.manifest);
+                return session.saveManifest(app.path, branch.manifest);
             }).then(function() {
-                return $session.registerApp(app);
+                return session.registerApp(app);
             }).then(function() {
                 $scope.link.visible = false;
                 $scope.link.app = null;
@@ -129,7 +125,7 @@
          * @summary Creates a new app.
          */
         $scope.createAppSubmit = function() {
-            $session.createApp($scope.create.app).then(function(success) {
+            session.createApp($scope.create.app).then(function(success) {
                 if (success) {
                     $scope.create.app = {};
                     $scope.create.visible = false;
@@ -144,7 +140,7 @@
          * @param {object} app - The app to open.
          */
         $scope.openApp = function(app) {
-            $session.openApp(app);
+            session.openApp(app);
             $state.go('devkit.app.details', {
                 "app": app.name
             });
@@ -172,11 +168,11 @@
                     if (err.code !== 'ENOENT') {
                         throw err;
                     }
-                    return $session.getBranch(app.name, "master", true).then(function(branch) {
+                    return session.getBranch(app.name, "master", true).then(function(branch) {
                         app.commit = branch.commit;
-                        return $session.saveManifest(app.path, branch.manifest);
+                        return session.saveManifest(app.path, branch.manifest);
                     }).then(function() {
-                        return $session.registerApp(app);
+                        return session.registerApp(app);
                     });
                 }).then(function() {
                     app.damaged = false;
@@ -192,21 +188,26 @@
          */
         $scope.unlinkApp = function(app) {
             delete app.path;
-            $session.unregisterApp(app.name);
+            session.unregisterApp(app.name);
         };
 
         // --------------------------------------------------
         // Initialization
-
-        $scope.apps = $session.apps;
+        
+        function init() {
+            $scope.apps = session.apps;
+            $scope.$apply();
+        }
+        
+        $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('appsController', [
-        '$environment',
-        '$session',
+        '$rootScope',
+        'session',
         '$state',
         '$scope',
         '$http',

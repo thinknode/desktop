@@ -4,21 +4,21 @@
  * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
  */
 
-(function() {
+(function () {
     'use strict';
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function authSelectController($state, $scope, $session, $environment, $location) {
+    function authSelectController($rootScope, $state, $scope, session, environment) {
 
         // --------------------------------------------------
         // Scope methods
 
-        $scope.select = function($event, profile) {
-            $session.validate(profile).then(function() {
+        $scope.select = function ($event, profile) {
+            session.validate(profile).then(function () {
                 $state.go('devkit.api');
-            }).catch(function(err) {
+            }).catch(function (err) {
                 $state.go('auth.login', {
                     "user": profile.name,
                     "username": profile.username,
@@ -29,23 +29,28 @@
 
         // --------------------------------------------------
         // Initialization
-
-        if (!$environment.hasCredentials()) {
-            $state.go('auth.login');
+        
+        function init() {
+            if (!environment.hasCredentials()) {
+                $state.go('auth.login');
+            }
+            
+            $scope.profiles = environment.credentials();
+            $scope.$apply();
         }
 
-        $scope.profiles = $environment.credentials();
+        $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('authSelectController', [
+        '$rootScope',
         '$state',
         '$scope',
-        '$session',
-        '$environment',
-        '$location',
+        'session',
+        'environment',
         authSelectController
     ]);
 })();

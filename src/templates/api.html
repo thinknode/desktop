@@ -29,28 +29,19 @@
                     </div>
                 </div>
             </div>
-
         </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th></th>
-                    <th>
-                        <div class="headers-tab" ng-click='clickRequestHeaders($event)' ng-class="currentRoute.type">
-                            Headers <i class="fa"  ng-class="{'fa-chevron-circle-up': showRequestHeaders, 'fa-chevron-circle-down': !showRequestHeaders}"></i>
-                        </div>
-                    </th>
-                </tr>
-                <tr>
-                    <th colspan='2'>
-                        <div ng-hide='!showRequestHeaders' class='headers-content' ng-class="currentRoute.type">
-                            <pre class="pre-headers">{{requestHeaders}}</pre>
-                        </div>
-                    </th>
-                </tr>
-            </thead>
-        </table>
+        <div class="api-result" ng-show="currentResultString">
+            <div class="request-headers" >
+                <div class="headers-tab" ng-click='clickRequestHeaders($event)' ng-class="currentRoute.type">
+                    Request Headers <i class="fa"  ng-class="{'fa-chevron-circle-down': showRequestHeaders, 'fa-chevron-circle-up': !showRequestHeaders}"></i>
+                </div>
+
+                <div ng-show="showRequestHeaders" class="headers-body" ng-repeat="(key, value) in requestHeaders"  ng-class="currentRoute.type">
+                    <div class="header-value"><strong>{{key}}</strong>: {{value}}</div>
+                </div>
+            </div>
+        </div>
 
         <div id="api-route-params" ng-if="currentRoute.params">
             <h2>Route Parameters</h2>
@@ -99,36 +90,19 @@
             <div class="api-status-box success" ng-class="{'glow': successGlow}" ng-if="currentResultStatus === true"><i class="fa fa-check-circle"></i> <span>Success: {{statusCode}}</span></div>
             <div class="api-status-box failure" ng-class="{'glow': successGlow}" ng-if="currentResultStatus === false"><i class="fa fa-exclamation-triangle"></i> <span>Failure: {{statusCode}}</span></div>
         </div>
-        <div id="api-result" ng-if="currentResultString" ng-animate="{enter: 'animate-enter', leave: 'animate-leave'}">
-            <table>
-                <thead>
-                    <tr>
-                        <th><h2>Response</h2></th>
-                        <th>
-                            <div class="headers-tab" ng-click='clickResponseHeaders($event)' ng-class="currentRoute.type">
-                                Headers <i class="fa"  ng-class="{'fa-chevron-circle-up': showResponseHeaders, 'fa-chevron-circle-down': !showResponseHeaders}"></i>
-                            </div>
-                        </th>
-                    </tr>
-                    <tr>
-                        <th colspan='2'>
-                            <div ng-hide='!showResponseHeaders' class='headers-content' ng-class="currentRoute.type">
-                                <pre class="pre-headers">{{responseHeaders}}</pre>
-                            </div>
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td colspan='2'>
-                            <div  ui-ace="{
-                                 mode: 'json',
-                                 onLoad: aceLoaded
-                                 }" ng-model="currentResultString" ng-readonly="true"></div>
-                        </td>
-                    </tr>
-                </tbody>
-            </table>
+        <div class="api-result" ng-if="currentResultString" ng-animate="{enter: 'animate-enter', leave: 'animate-leave'}">
+            <div class="response-headers">
+                <div ng-show="responseHeaders" class="headers-tab" ng-click='clickResponseHeaders($event)' ng-class="currentRoute.type">
+                    Response Headers <i class="fa"  ng-class="{'fa-chevron-circle-down': showResponseHeaders, 'fa-chevron-circle-up': !showResponseHeaders}"></i>
+                </div>
+                <div ng-hide="!showResponseHeaders" class="headers-body" ng-repeat="(key, value) in responseHeaders" class='headers-content' ng-class="currentRoute.type">
+                    <div class="header-value"><strong>{{key}}</strong>: {{value}}</div>
+                </div>
+            </div>
+            <div ui-ace="{
+                mode: 'json',
+                onLoad: aceLoaded
+                }" ng-model="currentResultString" ng-readonly="true"></div>
         </div>
         <a id="bottom"></a>
     </div>

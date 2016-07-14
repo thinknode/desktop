@@ -182,4 +182,46 @@ table {
             }
         }
     }
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // light with cell borders
+    &.light {
+        border-radius: 5px v;
+        border: 1px solid $tan;
+        font-size: 0.8rem !important;
+        text-align: left !important;
+        width: 100% !important;
+
+        tr {
+            th {
+                background: white !important;
+                font-weight: 400 !important;
+                padding: 10px !important;
+            }
+
+            td {
+                color: $charcoal-light;
+                padding: 10px !important;
+
+                a {
+                    color: $blue;
+                }
+
+                &:not(:last-child) {
+                    border-right: 1px solid $tan;
+                }
+            }
+
+            &.center {
+                text-align: center;
+            }
+        }
+    }
+
+    &.nested {
+        margin-bottom: 180px;
+    }
+
+    &.padded-ten {
+        padding: 10px !important;
+    }
 }

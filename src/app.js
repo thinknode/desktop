@@ -1,14 +1,13 @@
-(function() {
+(function () {
     'use strict';
 
+    var bluebird = require('bluebird');
     var _templateBase = './scripts';
 
     // Define module
     var app = angular.module('app', [
         '720kb.tooltips',
         'angularRipple',
-        'app.environment',
-        'app.session',
         'base64',
         'ngAnimate',
         'ngRoute',
@@ -23,13 +22,11 @@
     app.config([
         '$stateProvider',
         '$urlRouterProvider',
-        '$sessionProvider',
-        '$environmentProvider',
         '$httpProvider',
         'toastrConfig',
         'notificationsConfigProvider',
         'laddaProvider',
-        function($stateProvider, $urlRouterProvider, $sessionProvider, $environmentProvider, $httpProvider, toastrConfig, notificationsConfigProvider, ladda) {
+        function ($stateProvider, $urlRouterProvider, $httpProvider, toastrConfig, notificationsConfigProvider, ladda) {
 
             // Toastr customization
             angular.extend(toastrConfig, {
@@ -47,8 +44,8 @@
             $stateProvider.state('auth', {
                 abstract: true,
                 templateUrl: './src/templates/auth.html',
-                resolve: {
-                    env: $environmentProvider.init
+                data: {
+                    env: true
                 }
             });
 
@@ -62,8 +59,8 @@
                 url: '/auth/login?user&username&host',
                 templateUrl: './src/templates/auth.login.html',
                 controller: 'authLoginController',
-                resolve: {
-                    env: $environmentProvider.init
+                data: {
+                    env: true
                 }
             });
 
@@ -74,9 +71,9 @@
                 abstract: true,
                 templateUrl: './src/templates/root.html',
                 controller: 'rootController',
-                resolve: {
-                    session: $sessionProvider.currentSession,
-                    env: $environmentProvider.init
+                data: {
+                    env: true,
+                    session: true
                 }
             });
 
@@ -93,9 +90,9 @@
                 url: '/develop/apps',
                 templateUrl: './src/templates/develop.apps.html',
                 controller: 'appsController',
-                resolve: {
-                    session: $sessionProvider.currentSession,
-                    env: $environmentProvider.init
+                data: {
+                    env: true,
+                    session: true
                 }
             });
 
@@ -104,25 +101,27 @@
                 url: '/develop/apps/:app',
                 templateUrl: './src/templates/develop.app.html',
                 controller: 'appController',
-                resolve: {
-                    session: $sessionProvider.currentSession,
-                    env: $environmentProvider.init
+                data: {
+                    env: true,
+                    session: true
                 }
             });
-
-            $stateProvider.state('devkit.app.debug', {
+            
+            /*jslint todo: true */
+            // TODO: Reimplement the app debug functionality. https://github.com/thinknode/desktop/issues/28
+            /*$stateProvider.state('devkit.app.debug', {
                 url: '/debug',
                 templateUrl: './src/templates/develop.app.debug.html',
                 controller: 'appDebugController'
-            });
+            });*/
 
             $stateProvider.state('devkit.app.details', {
                 url: '/details',
                 templateUrl: './src/templates/develop.app.details.html',
                 controller: 'appDetailsController',
-                resolve: {
-                    session: $sessionProvider.currentSession,
-                    env: $environmentProvider.init
+                data: {
+                    env: true,
+                    session: true
                 }
             });
 
@@ -162,31 +161,43 @@
             });
         }
     ]);
+    
+    // --------------------------------------------------
+    // App Constants
+            
+    app.constant('DOCS_URL','https://cdn.thinknode.com/docs');
 
     // Configure global event handlers
-    app.run(['$rootScope', '$state', '$stateParams', function($rootScope, $state, $stateParams) {
-        $rootScope.$state = $state;
-        $rootScope.$stateParams = $stateParams;
+    app.run([
+        '$rootScope',
+        '$state',
+        '$stateParams',
+        'environment',
+        'session',
+        function ($rootScope, $state, $stateParams, environment, session) {
+            $rootScope.$state = $state;
+            $rootScope.$stateParams = $stateParams;
+    
+            $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams) {
+               
+                var promises = [];
+                
+                // Initialize the environment and load the current session for routes that need it
+                if (toState.data && toState.data.env) {
+                    promises.push(environment.init());
+                } else {
+                    promises.push(bluebird.resolve());
+                }
+                if (toState.data && toState.data.session) {
+                    promises.push(session.currentSession());
+                } else {
+                    promises.push(bluebird.resolve());
+                }
 
-        $rootScope.$on('$stateChangeError', function(e, to, toParams, from, fromParams, err) {
-            //console.log("$stateChangeError", err, to, from);
-            // $state.go('auth.select');
-        });
-    }]);
-    // app.run(['$location', '$rootScope', function($location, $rootScope) {
+                bluebird.all(promises).then(function () {
+                    $rootScope.$emit('initialized');
+                });
+            });
+        }]);
 
-    //     $location.path('/login');
-
-    //     $rootScope.$on('$routeChangeSuccess', function(e, curr, prev, err) {
-    //         console.log("$routeChangeSuccess", curr, prev);
-    //         // $rootScope.initialized = true;
-    //     });
-
-
-
-    //     // // console.log($rootScope.path);
-    //     // $rootScope.path = function(url) {
-    //     //     $location.path(url);
-    //     // };
-    // }]);
 })();

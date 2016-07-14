@@ -22,12 +22,12 @@
         // --------------------------------------------------
         // Service
 
-        function Docs($environment, $http, $q) {
-            this.$environment = $environment;
+        function Docs(environment, $http, $q, docsUrl) {
+            this.environment = environment;
             this.$http = $http;
             this.$q = $q;
-
-            this._root = $environment.config('docs');
+            this._root = docsUrl;
+            
             this._version = 'v1.0';
             this._base = this._root + '/' + this._version;
 
@@ -107,11 +107,12 @@
         // Provider factory
 
         this.$get = [
-            '$environment',
+            'environment',
             '$http',
             '$q',
-            function($environment, $http, $q) {
-                return new Docs($environment, $http, $q);
+            'DOCS_URL',
+            function(environment, $http, $q, docsUrl) {
+                return new Docs(environment, $http, $q, docsUrl);
             }
         ];
     }

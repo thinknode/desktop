@@ -72,6 +72,7 @@
     font-size: 12px;
     cursor: pointer;
     float:right;
+    margin-bottom: 15px;
 }
 
 @mixin headerContentPre(){
@@ -333,42 +334,21 @@
             }
         }
 
-        #api-result {
-            padding-bottom:20px;
-            table {
-                font-size: 1.0em;
-                tr {
-                    th, td {
-                        padding: 0;
-                        i.fa {
-                            font-size:1.2em;
-                        }
-                    }
-                }
+        #api-result, .api-result {
+            .response-headers {
+                padding-bottom: 20px;
+            }
 
-                h2 {
-                    margin-bottom: 20px !important;
-                    span {
-                        background: #f7f8f8;
-                        border-radius: 5px;
-                        display: inline-block;
-                        font-size: 15px;
-                        font-weight: lighter;
-                        line-height: 30px;
-                        padding: 0 10px;
-                    }
-                }
-                .headers-tab {
-                    @include headerTab();
-                }
-
-                .headers-content {
-                    max-height:125px;
-                    margin-bottom:10px;
-                }
-                .headers-content pre{
-                    @include headerContentPre();
-                }
+            .request-headers {
+                padding-bottom: 10px;
+            }
+            .header-value {
+                border-radius: 5px;
+                display: inline-block;
+                font-size: 12px;
+                font-weight: lighter;
+                line-height: 25px;
+                padding: 0 10px;
             }
         }
 

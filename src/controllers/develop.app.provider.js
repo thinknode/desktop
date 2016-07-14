@@ -10,25 +10,14 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function appProviderController($session, $state, $params, $scope, $manifest) {
+    function appProviderController($rootScope, $scope, $manifest) {
 
         // --------------------------------------------------
         // Required modules
 
-        var _ = require('lodash');
-        var bluebird = require('bluebird');
         var fspath = require('path');
         var remote = require('remote');
         var shell = remote.require('shell');
-
-        // --------------------------------------------------
-        // Local variables
-
-        // --------------------------------------------------
-        // Local functions
-
-        // --------------------------------------------------
-        // Scope variables
 
         // --------------------------------------------------
         // Scope methods
@@ -43,15 +32,19 @@
 
         // --------------------------------------------------
         // Initialization
+        
+        function init() {
+            // Initializtion logic that depends on environment or session services goes here
+        }
+        
+        $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('appProviderController', [
-        '$session',
-        '$state',
-        '$stateParams',
+        '$rootScope',
         '$scope',
         '$manifest',
         appProviderController
