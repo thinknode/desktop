@@ -19,7 +19,9 @@
 
         // --------------------------------------------------
         // Local functions
-
+        
+        var deregisterInit;
+        
         // --------------------------------------------------
         // Scope variables
 
@@ -42,11 +44,12 @@
         // Initialization
 
         function init() {
+            deregisterInit();
             $scope.app = _.find(session.apps, 'name', $stateParams.app);
             $manifest.load($scope.app);
             $scope.$apply();
         }
-        $rootScope.$on('initialized', init);
+        deregisterInit = $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

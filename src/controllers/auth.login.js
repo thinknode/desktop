@@ -11,7 +11,8 @@
     // Controller
 
     function authLoginController($rootScope, $state, $stateParams, $scope, environment, session) {
-
+        
+        var deregisterInit;
         // --------------------------------------------------
         // Scope methods
 
@@ -57,11 +58,12 @@
             $scope.data.host = decodeURIComponent($stateParams.host);
         }
         function init() {
+            deregisterInit();
             $scope.hasCredentials = environment.hasCredentials();
             $scope.$apply();
         }
 
-        $rootScope.$on('initialized', init);
+        deregisterInit = $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

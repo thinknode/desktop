@@ -20,7 +20,8 @@
 
         // --------------------------------------------------
         // Local variables
-
+        
+        var deregisterInit;
         var fields = ['display_name', 'description', 'active'];
 
         // --------------------------------------------------
@@ -98,12 +99,13 @@
         // Initialization
         
         function init() {
+            deregisterInit();
             $scope.refresh().then(function(){
                 $scope.$apply();
             });
         }
         
-        $rootScope.$on('initialized', init);
+        deregisterInit = $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

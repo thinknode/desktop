@@ -20,12 +20,12 @@
 
         // --------------------------------------------------
         // Local variables
-
-        var namespace = session.namespace();
+        
+        var deregisterInit;
         var app = $state.params.app;
-        var branchKey = namespace + ".debug." + app + ".branch";
-        var realmKey = namespace + ".debug." + app + ".realm";
-        var portKey = namespace + ".debug." + app + ".port";
+        var branchKey = ".debug." + app + ".branch";
+        var realmKey = ".debug." + app + ".realm";
+        var portKey = ".debug." + app + ".port";
 
         // --------------------------------------------------
         // Local functions
@@ -143,14 +143,14 @@
          * @summary Saves the currently selected branch.
          */
         $scope.changeBranch = function() {
-            localStorage.setItem(branchKey, $scope.branch.name);
+            $scope.storage.set(branchKey, $scope.branch.name);
         };
 
         /**
          * @summary Saves the currently selected realm.
          */
         $scope.changeRealm = function() {
-            localStorage.setItem(realmKey, $scope.realm.name);
+            $scope.storage.set(realmKey, $scope.realm.name);
         };
 
         /**
@@ -158,7 +158,7 @@
          */
         $scope.changePort = function() {
             if (typeof $scope.port === 'number') {
-                localStorage.setItem(portKey, $scope.port);
+                $scope.storage.set(portKey, $scope.port);
             }
         };
 
@@ -191,14 +191,15 @@
          * app and a list of development realms, both based on the user's permissions.
          */
         $scope.init = function() {
-            var selectedBranch = localStorage.getItem(branchKey);
-            var selectedRealm = localStorage.getItem(realmKey);
-            var selectedPort = localStorage.getItem(portKey);
+            deregisterInit();
+            var selectedBranch = $scope.storage.get(branchKey);
+            var selectedRealm = $scope.storage.get(realmKey);
+            var selectedPort = $scope.storage.get(portKey);
             if (selectedPort) {
                 $scope.port = parseInt(selectedPort);
             } else {
                 $scope.port = 17234;
-                localStorage.setItem(portKey, $scope.port);
+                $scope.storage.set(portKey, $scope.port);
             }
             $http({
                 "method": 'GET',
@@ -223,7 +224,7 @@
                 } else {
                     $scope.branch = $scope.branches[0];
                 }
-                localStorage.setItem(branchKey, $scope.branch.name);
+                $scope.storage.set(branchKey, $scope.branch.name);
                 return $http({
                     "method": 'GET',
                     "url": session.url('/iam/realms', null, {
@@ -248,9 +249,9 @@
                     $scope.realm = $scope.realms[0];
                 }
                 if ($scope.realm) {
-                    localStorage.setItem(realmKey, $scope.realm.name);
+                    $scope.storage.set(realmKey, $scope.realm.name);
                 } else {
-                    localStorage.removeItem(realmKey);
+                    $scope.storage.del(realmKey);
                 }
                 $scope.$apply();
             });
@@ -382,7 +383,7 @@
         // --------------------------------------------------
         // Initialization
 
-        $rootScope.$on('initialized', $scope.init);
+        deregisterInit = $rootScope.$on('initialized', $scope.init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

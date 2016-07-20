@@ -11,7 +11,9 @@
     // Controller
 
     function rootController($rootScope, $state, $scope, session, $http, $sce, notifications) {
-
+        
+        var deregisterInit;
+        
         // --------------------------------------------------
         // Scope methods
 
@@ -62,11 +64,12 @@
         // Initialization
         
         function init(){
+            deregisterInit();
             $scope.currentSession = session.current();
             $scope.openApps = session.openApps;
             $scope.$apply();
         }
-        $rootScope.$on('initialized', init);
+        deregisterInit = $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

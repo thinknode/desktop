@@ -20,7 +20,9 @@
         var fspath = require('path');
         var remote = require('remote');
         var dialog = remote.require('dialog');
-
+        
+        
+        var deregisterInit;
 
         // --------------------------------------------------
         // Scope variables
@@ -195,11 +197,12 @@
         // Initialization
         
         function init() {
+            deregisterInit();
             $scope.apps = session.apps;
             $scope.$apply();
         }
         
-        $rootScope.$on('initialized', init);
+        deregisterInit = $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

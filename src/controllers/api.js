@@ -14,16 +14,18 @@
         
         // --------------------------------------------------
         // Local variables
+        
+        var lastService;
+        var lastModule;
 
-        var lastService = localStorage.getItem('lastService');
-        var lastModule = localStorage.getItem('lastModule');
-
-        var lastId = localStorage.getItem('id');
-        var lastContext = localStorage.getItem('context');
-        var routeMap = localStorage.getItem('routeMap');
+        var lastId;
+        var lastContext;
+        var routeMap;
 
         var buf;
         var glowTimeout = null;
+        
+        var deregisterInit;
 
         // --------------------------------------------------
         // Local requires
@@ -37,6 +39,13 @@
         var dialog = remote.require('dialog');
 
         var init = function() {
+            deregisterInit();
+            lastService = $scope.storage.get('lastService');
+            lastModule = $scope.storage.get('lastModule');
+
+            lastId = $scope.storage.get('id');
+            lastContext = $scope.storage.get('context');
+            routeMap = $scope.storage.get('routeMap');
             $docs.services().then(function(obj) {
                 $scope.services = obj.items;
             });
@@ -44,30 +53,20 @@
             // Initialize the route map (responsible for remembering the last route used for each service)
             if (!routeMap) {
                 routeMap = {};
-                localStorage.setItem('routeMap', JSON.stringify({}));
+                $scope.storage.set('routeMap', {});
             } else {
-                try {
-                    routeMap = JSON.parse(routeMap);
-                } catch(err) {
+                if (typeof routeMap !== 'object') {
                     routeMap = {};
-                    localStorage.setItem('routeMap', routeMap);
+                    $scope.storage.set('routeMap', routeMap);
                 }
             }
 
             // Initialize the param map (responsible for remembering params that have been entered for a route)
-            $scope.paramMap = localStorage.getItem('paramMap');
+            $scope.paramMap = $scope.storage.get('paramMap');
             if (!$scope.paramMap) {
                 $scope.paramMap = {};
-                localStorage.setItem('paramMap', JSON.stringify($scope.paramMap));
-            } else {
-                try {
-                    $scope.paramMap = JSON.parse($scope.paramMap);
-                } catch(err) {
-
-                    localStorage.setItem('paramMap', $scope.paramMap);
-                }
+                $scope.storage.set('paramMap', $scope.paramMap);
             }
-
             $scope.currentSession = session.current();
             $scope.current = {
                 body: ""
@@ -104,17 +103,16 @@
          * multiple modules/routes (like context id) and also sets scope variables that control the behavior or the UI.
          */
         var configure = function() {
-
             // Remember last id
             if ($scope.currentParams && typeof $scope.currentParams.id === 'string') {
                 lastId = $scope.currentParams.id;
-                localStorage.setItem('id', lastId);
+                $scope.storage.set('id', lastId);
             }
 
             // Remember last context
             if ($scope.currentQuery && typeof $scope.currentQuery.context === 'string') {
                 lastContext = $scope.currentQuery.context;
-                localStorage.setItem('context', lastContext);
+                $scope.storage.set('context', lastContext);
             }
             // Reset current settings
             var type = $scope.currentRoute.type;
@@ -160,8 +158,7 @@
                 $scope.paramMap[$scope.currentRoute.id].currentQuery = $scope.currentQuery;
                 $scope.paramMap[$scope.currentRoute.id].currentBody = $scope.current.body;
             }
-            localStorage.setItem('paramMap', JSON.stringify($scope.paramMap));
-
+            $scope.storage.set('paramMap', $scope.paramMap);
             $scope.currentResource = $scope.currentModule.resources[resourceIndex];
             $scope.currentRoute = $scope.currentResource.routes[routeIndex];
             routeMap[$scope.currentModule.id] = {
@@ -177,7 +174,7 @@
                 };
             }
 
-            localStorage.setItem('routeMap', JSON.stringify(routeMap));
+            $scope.storage.set('routeMap', routeMap);
             configure();
         };
 
@@ -286,17 +283,17 @@
             $event.stopPropagation();
             $docs.module(service, module).then(function(obj) {
                 $scope.currentModule = obj;
-                localStorage.setItem('lastService', service);
-                localStorage.setItem('lastModule', module);
+                $scope.storage.set('lastService', service);
+                $scope.storage.set('lastModule', module);
 
                 // Set the last route used
-                routeMap = localStorage.getItem('routeMap');
+                routeMap = $scope.storage.get('routeMap');
                 if (routeMap) {
                     try {
                         routeMap = JSON.parse(routeMap);
                     } catch(err) {
                         routeMap = {};
-                        localStorage.setItem('routeMap', routeMap);
+                        $scope.storage.set('routeMap', routeMap);
                     }
                 }
 
@@ -325,7 +322,7 @@
                 currentParams: $scope.currentParams,
                 currentQuery: $scope.currentQuery
             };
-            localStorage.setItem('routeMap', JSON.stringify(routeMap));
+            $scope.storage.set('routeMap', routeMap);
             setRoute(resourceIndex, routeIndex);
         };
 
@@ -391,7 +388,7 @@
 
         // --------------------------------------------------
         // Initialization
-        $rootScope.$on('initialized', init);
+        deregisterInit = $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
