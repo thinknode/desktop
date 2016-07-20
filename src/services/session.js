@@ -53,20 +53,16 @@
         return host;
     }
 
-    function SessionService($q, $http, $base64, $state, environment) {
+    function SessionService($q, $http, $base64, $state, environment, $rootScope) {
         this.$http = $http;
         this.$q = $q;
         this.$base64 = $base64;
         this.$state = $state;
+        this.$rootScope = $rootScope;
 
         this.environment = environment;
         this._profile = initProfile;
         this._current = initSession;
-        if (this._profile && this._current) {
-            this._namespace = initProfile.host + "." + initSession.domain;
-        } else {
-            this._namespace = null;
-        }
 
         this._debug = null;
 
@@ -139,8 +135,7 @@
                  }
                  }
                  }*/
-                var namespace = initProfile.host + "." + initSession.domain;
-                var apps = JSON.parse(localStorage.getItem(namespace + '.open_apps')) || [];
+                var apps = self.$rootScope.storage.get('.open_apps') || [];
                 for (var k = 0; k < apps.length; ++k) {
                     initOpenApps.push(apps[k]);
                 }
@@ -186,7 +181,7 @@
                 "display_name": open.display_name
             };
         });
-        localStorage.setItem(this._namespace + '.open_apps', JSON.stringify(apps));
+        this.$rootScope.storage.set('.open_apps', apps);
         return this.openApps.length === 0;
     };
 
@@ -326,7 +321,8 @@
             tokenKey: this._profile.tokenKey,
             token: this._profile.token
         };
-
+        // We do this prior to nullifying the profile because namespace generation depends on it
+        var ns = this.$rootScope.storage.getNamespace();
         this.environment.forget(key);
         this._profile = null;
         // Handle clients logging out that have not used the new token system.
@@ -342,15 +338,8 @@
         }).then(function () {
             self.environment.forget(key);
             self._profile = null;
-            self._namespace = null;
+            self.$rootScope.storage.delNamespace(ns);
         });
-    };
-
-    /**
-     * @summary Get the namespace for the current session.
-     */
-    SessionService.prototype.namespace = function () {
-        return this._namespace;
     };
 
     /**
@@ -374,7 +363,7 @@
                     "display_name": open.display_name
                 };
             });
-            localStorage.setItem(this._namespace + '.open_apps', JSON.stringify(apps));
+            this.$rootScope.storage.set('.open_apps', apps);
         }
     };
 
@@ -532,6 +521,7 @@
         '$base64',
         '$state',
         'environment',
+        '$rootScope',
         SessionService
     ]);
 })();

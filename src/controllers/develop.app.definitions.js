@@ -19,7 +19,8 @@
 
         // --------------------------------------------------
         // Scope variables
-
+        
+        var deregisterInit;
         $scope.apps = [];
 
         $scope.add = {
@@ -147,9 +148,10 @@
         
         function init() {
             // Initializtion logic that depends on environment or session services goes here
+            deregisterInit();
         }
         
-        $rootScope.$on('initilized', init);
+        deregisterInit = $rootScope.$on('initilized', init);
         
     }
 

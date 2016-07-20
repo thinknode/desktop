@@ -21,6 +21,8 @@
 
         // --------------------------------------------------
         // Local variables
+        
+        var deregisterInit;
 
         // --------------------------------------------------
         // Local functions
@@ -44,9 +46,10 @@
         
         function init() {
             // Initializtion logic that depends on environment or session services goes here
+            deregisterInit();
         }
         
-        $rootScope.$on('initialized', init);
+        deregisterInit = $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

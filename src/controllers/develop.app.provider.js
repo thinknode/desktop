@@ -18,6 +18,8 @@
         var fspath = require('path');
         var remote = require('remote');
         var shell = remote.require('shell');
+        
+        var deregisterInit;
 
         // --------------------------------------------------
         // Scope methods
@@ -35,9 +37,10 @@
         
         function init() {
             // Initializtion logic that depends on environment or session services goes here
+            deregisterInit();
         }
         
-        $rootScope.$on('initialized', init);
+        deregisterInit = $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

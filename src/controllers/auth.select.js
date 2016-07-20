@@ -11,7 +11,7 @@
     // Controller
 
     function authSelectController($rootScope, $state, $scope, session, environment) {
-
+        var deregisterInit;
         // --------------------------------------------------
         // Scope methods
 
@@ -31,6 +31,7 @@
         // Initialization
         
         function init() {
+            deregisterInit();
             if (!environment.hasCredentials()) {
                 $state.go('auth.login');
             }
@@ -39,7 +40,7 @@
             $scope.$apply();
         }
 
-        $rootScope.$on('initialized', init);
+        deregisterInit = $rootScope.$on('initialized', init);
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

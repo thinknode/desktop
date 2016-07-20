@@ -174,9 +174,11 @@
         '$stateParams',
         'environment',
         'session',
-        function ($rootScope, $state, $stateParams, environment, session) {
+        'storageProvider',
+        function ($rootScope, $state, $stateParams, environment, session, storageProvider) {
             $rootScope.$state = $state;
             $rootScope.$stateParams = $stateParams;
+            $rootScope.storage = storageProvider;
     
             $rootScope.$on('$stateChangeSuccess', function (event, toState, toParams) {
                
