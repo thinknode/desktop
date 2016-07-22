@@ -46,7 +46,7 @@
         $scope.init = function() {
             var msg = '<span class="updateLink" onclick="helpers.openDownloadPage()">' +
                 'A new version is available for download: Click here to download</span>';
-            var version = "1.1.0";
+            var version = "1.2.0";
             var request = $http({
                 method: "get",
                 url: "https://s3.amazonaws.com/thinknode-desktop-client/current.json"
