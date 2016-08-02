@@ -288,13 +288,9 @@
 
                 // Set the last route used
                 routeMap = $scope.storage.get('routeMap');
-                if (routeMap) {
-                    try {
-                        routeMap = JSON.parse(routeMap);
-                    } catch(err) {
-                        routeMap = {};
-                        $scope.storage.set('routeMap', routeMap);
-                    }
+                if (!routeMap) {
+                    routeMap = {};
+                    $scope.storage.set('routeMap', routeMap);
                 }
 
                 if (routeMap.hasOwnProperty(module)) {
@@ -337,6 +333,11 @@
                 glowTimeout = null;
             }
             $scope.sendingRequest = true;
+            for (var param in $scope.currentQuery) {
+                if ($scope.currentQuery[param] === "") {
+                    delete $scope.currentQuery[param];
+                }
+            }
             var opts = {
                 method: $scope.currentRoute.type,
                 url: url($scope.currentRoute.url, $scope.currentParams, $scope.currentQuery),

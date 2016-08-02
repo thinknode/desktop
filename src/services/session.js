@@ -1,4 +1,4 @@
-(function () {
+(function() {
     'use strict';
     // --------------------------------------------------
     // Required modules
@@ -69,7 +69,7 @@
         this.apps = initApps;
         this.openApps = initOpenApps;
     }
-    
+
     /**
      * @summary Get the current user session.
      * @todo Reimplement getting apps from the local datastore and integrating appropriate logic.
@@ -77,9 +77,9 @@
      * 
      * @returns {Promise} A promise that resolves with the current user session.
      */
-    SessionService.prototype.currentSession = function () {
+    SessionService.prototype.currentSession = function() {
         var self = this;
-        return this.environment.init().then(function () {
+        return this.environment.init().then(function() {
             var profile = self.environment.profile();
             if (!profile) {
                 self.$state.go('auth.select');
@@ -99,14 +99,14 @@
                 "headers": {
                     "Authorization": 'Bearer ' + profile.token
                 }
-            }).then(function (res) {
+            }).then(function(res) {
                 initSession = res.data;
                 initProfile = profile;
                 initProfile.name = res.data.user;
                 self._profile = initProfile;
                 self._current = initSession;
                 return self.environment.update(initProfile);
-            }).then(function () {
+            }).then(function() {
                 return self.$http({
                     "method": 'GET',
                     "url": url + '/apm/apps',
@@ -114,35 +114,41 @@
                         "Authorization": 'Bearer ' + profile.token
                     }
                 });
-            }).then(function (res) {
+            }).then(function(res) {
                 var apps = res.data;
                 for (var i = 0; i < apps.length; ++i) {
                     initApps.push(apps[i]);
                 }
                 initApps.sort(compareByName);
-                return bluebird.resolve();
-                //return self.environment.db().select().from(dbApps).exec();
-
-            }).then(function (items) {
-
-                /*for (var i = 0; i < items.length; ++i) {
-                 for (var j = 0; j < initApps.length; ++j) {
-                 var cmp = compareByName(items[i], initApps[j]);
-                 if (cmp === 0) {
-                 initApps[j].path = items[i].path;
-                 initApps[j].damaged = isDamaged(items[i].path);
-                 break;
-                 }
-                 }
-                 }*/
-                var apps = self.$rootScope.storage.get('.open_apps') || [];
-                for (var k = 0; k < apps.length; ++k) {
-                    initOpenApps.push(apps[k]);
+                var open = self.$rootScope.storage.get('.open_apps') || [];
+                for (var k = 0; k < open.length; ++k) {
+                    initOpenApps.push(open[k]);
                 }
                 initOpenApps.sort(compareByName);
-            }).catch(function (err) {
+
+                // #######################################################
+                // @todo: Will reimplement as part of Issue-28:
+                //   (https://github.com/thinknode/desktop/issues/28)
+                // #######################################################
+
+                //     return self.environment.db().select().from(dbApps).exec();
+                // }).then(function (items) {
+
+                //     for (var i = 0; i < items.length; ++i) {
+                //         for (var j = 0; j < initApps.length; ++j) {
+                //             var cmp = compareByName(items[i], initApps[j]);
+                //             if (cmp === 0) {
+                //                 initApps[j].path = items[i].path;
+                //                 initApps[j].damaged = isDamaged(items[i].path);
+                //                 break;
+                //             }
+                //         }
+                //     }
+            }).catch(function(err) {
                 // If their session and or domain is no longer valid, redirect them to login
-                self.$state.go('auth.login');
+                if (err.status === 401) {
+                    self.$state.go('auth.login');
+                }
             }));
         });
     };
@@ -152,7 +158,7 @@
      *
      * @param {boolean} extern - Indicates the extern property.
      */
-    SessionService.prototype.api = function (extern) {
+    SessionService.prototype.api = function(extern) {
         if (extern) {
             return normalizeUrl(this.environment.host());
         } else {
@@ -163,7 +169,7 @@
     /**
      * @summary Clears the calculation cache
      */
-    SessionService.prototype.clearCache = function () {
+    SessionService.prototype.clearCache = function() {
         return this.environment.clearCalculations();
     };
 
@@ -173,9 +179,9 @@
      * @param {string} app - The name of the app to close.
      * @returns {boolean} Indicates whether the list of open apps is empty.
      */
-    SessionService.prototype.closeApp = function (app) {
+    SessionService.prototype.closeApp = function(app) {
         _.remove(this.openApps, _.matchesProperty('name', app));
-        var apps = _.map(this.openApps, function (open) {
+        var apps = _.map(this.openApps, function(open) {
             return {
                 "name": open.name,
                 "display_name": open.display_name
@@ -192,7 +198,7 @@
      * @returns {Promise} A promise that resolves once the app has been created or an error has
      *   been handled.
      */
-    SessionService.prototype.createApp = function (app) {
+    SessionService.prototype.createApp = function(app) {
         var self = this;
         return this.$http({
             "method": 'POST',
@@ -202,12 +208,12 @@
                 'Content-Type': 'application/json'
             },
             "data": app
-        }).then(function (res) {
+        }).then(function(res) {
             var app = res.data;
             self.apps.push(app);
             self.apps.sort(compareByName);
             return true;
-        }).catch(function (e) {
+        }).catch(function(e) {
             var message = 'Error (' + e.status + '): ' + e.data.message;
             alert(message);
             return false;
@@ -219,7 +225,7 @@
      *
      * @returns {object} The session object.
      */
-    SessionService.prototype.current = function () {
+    SessionService.prototype.current = function() {
         return this._current;
     };
 
@@ -232,7 +238,7 @@
      * @returns {string|object} Either the proxy hostname or `null` if requests are not being
      *   proxied.
      */
-    SessionService.prototype.debug = function (host, app) {
+    SessionService.prototype.debug = function(host, app) {
         if (typeof host === 'string') {
             this._debug = host;
             _.find(this.apps, _.matchesProperty('name', app)).debug = true;
@@ -252,7 +258,7 @@
      * @param {boolean} include_manifest - Indicates whether to include the manifest.
      * @returns {Promise} A promise that resolves with the branch.
      */
-    SessionService.prototype.getBranch = function (app, branch, include_manifest) {
+    SessionService.prototype.getBranch = function(app, branch, include_manifest) {
         return this.$http({
             "method": 'GET',
             "url": this.url('/apm/apps/:account/:app/branches/:branch', {
@@ -265,7 +271,7 @@
             "headers": {
                 "Authorization": 'Bearer ' + this.token()
             }
-        }).then(function (res) {
+        }).then(function(res) {
             return res.data;
         });
     };
@@ -277,7 +283,7 @@
      * @param {string} password - The password for a user.
      * @returns {Promise} A promise that resolves after user has been logged in.
      */
-    SessionService.prototype.login = function (username, password) {
+    SessionService.prototype.login = function(username, password) {
         var self = this;
         return this.$http({
             "method": 'GET',
@@ -285,7 +291,7 @@
             "headers": {
                 "Authorization": 'Basic ' + this.$base64.encode(username + ':' + password)
             }
-        }).then(function (res) {
+        }).then(function(res) {
             return self.$http.post(self.api(true) + '/cas/tokens', {
                 "description": "Generated by Thinknode Desktop Client for: " + os.hostname()
             }, {
@@ -294,7 +300,7 @@
                     'Content-Type': 'application/json'
                 }
             });
-        }).then(function (res) {
+        }).then(function(res) {
             var key = username + '@' + self.environment.host();
             self._profile = {
                 "name": res.data.user,
@@ -313,7 +319,7 @@
      *
      * @returns {Promise} A promise that resolves after user has been logged out.
      */
-    SessionService.prototype.logout = function () {
+    SessionService.prototype.logout = function() {
         var self = this;
         var key = this._profile.username + '@' + this._profile.host;
         var url = this.api(true);
@@ -335,7 +341,7 @@
             "headers": {
                 Authorization: "Bearer " + profile.token
             }
-        }).then(function () {
+        }).then(function() {
             self.environment.forget(key);
             self._profile = null;
             self.$rootScope.storage.delNamespace(ns);
@@ -347,7 +353,7 @@
      *
      * @param {object} app - The app to open.
      */
-    SessionService.prototype.openApp = function (app) {
+    SessionService.prototype.openApp = function(app) {
         var item = {
             "name": app.name,
             "display_name": app.display_name,
@@ -357,7 +363,7 @@
         if (idx < 0) {
             this.openApps.push(item);
             this.openApps.sort(compareByName);
-            var apps = _.map(this.openApps, function (open) {
+            var apps = _.map(this.openApps, function(open) {
                 return {
                     "name": open.name,
                     "display_name": open.display_name
@@ -376,7 +382,7 @@
      * @param {object} app - The data to use when registering the app.
      * @returns {Promise} A promise that resolves when the app has been registered.
      */
-    SessionService.prototype.registerApp = function (app) {
+    SessionService.prototype.registerApp = function(app) {
         /*var self = this;
         var item = {
             "host": self._profile.host,
@@ -400,13 +406,13 @@
      * @param {object} manifest - The manifest to save.
      * @returns {Promise} Write the file.
      */
-    SessionService.prototype.saveManifest = function (path, manifest) {
+    SessionService.prototype.saveManifest = function(path, manifest) {
         var data = JSON.stringify(manifest, null, 4);
         var filepath = fspath.resolve(path, 'manifest.json');
         return fs.writeFileAsync(filepath, data);
     };
 
-    SessionService.prototype.switch = function () {
+    SessionService.prototype.switch = function() {
         this.environment.deactivate();
         this._profile = null;
     };
@@ -416,7 +422,7 @@
      *
      * @returns {string} The session token for the user.
      */
-    SessionService.prototype.token = function () {
+    SessionService.prototype.token = function() {
         return this._profile.token;
     };
 
@@ -429,7 +435,7 @@
      * @param {boolean} extern - Indicates the extern property.
      * @returns {string} The constructed url.
      */
-    SessionService.prototype.url = function (route, params, query, extern) {
+    SessionService.prototype.url = function(route, params, query, extern) {
         var url = this.api(extern) + route;
         for (var p in params) {
             if (params.hasOwnProperty(p) && params[p] !== "") {
@@ -452,7 +458,7 @@
      * @param {string} app - The name of the app to unregister.
      * @returns {Promise} A promise that resolves once the app is unregistered.
      */
-    SessionService.prototype.unregisterApp = function (app) {
+    SessionService.prototype.unregisterApp = function(app) {
         /*var matches = _.matchesProperty('name', app);
         _.remove(this.openApps, matches);
         var db = this.environment.db();
@@ -472,7 +478,7 @@
      * @param {object} app
      * @returns {Promise} A promise that resolves once the app is updated.
      */
-    SessionService.prototype.updateApp = function (app) {
+    SessionService.prototype.updateApp = function(app) {
         /*var item = _.find(this.apps, 'name', app.name);
         item.display_name = app.display_name;
         item.description = app.description;
@@ -480,7 +486,7 @@
         var db = this.environment.db();
         return db.insertOrReplace().into(dbApps).values([row]).exec();*/
     };
-    
+
     /**
      * @summary Validate the current user application session with the server.
      * @todo Reimplement functionality to get apps from local data store and integrate logic.
@@ -489,7 +495,7 @@
      * @param {object} profile - Profile we want to validate
      * @returns {Promise} A promise that resolves when the profile is validated; otherwise rejects.
      */
-    SessionService.prototype.validate = function (profile) {
+    SessionService.prototype.validate = function(profile) {
         var self = this;
         self.environment.activate(profile);
         return self.$http({
@@ -498,7 +504,7 @@
             "headers": {
                 "Authorization": 'Bearer ' + profile.token
             }
-        }).then(function (res) {
+        }).then(function(res) {
             self._profile = profile;
             self._current = res.data;
         });
