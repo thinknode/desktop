@@ -64,62 +64,33 @@
                 </div>
             </div>
 
-            <div class="records-level">
-                <div class="filter">
-                    <input type="text" placeholder="Filter Records">
-                </div>
-                <div class="records-container">
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-
-                </div>
-            </div>
-
-            <div class="records-level">
-                <div class="filter">
-                    <input type="text" placeholder="Filter Records">
-                </div>
-                <div class="records-container">
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-
-                </div>
-            </div>
-
         </div>
 
         <div id="records-visualizer-details">
             <h3>MR-111-1111</h3>
             <ul>
-                <li>Id: 806342de83545ad9d0053bca2d9d4435</li>
-                <li>Record:
+                <li><strong>Id:</strong> <span class="long-id">806342de83545ad9d0053bca2d9d4435</span></li>
+                <li class="record"><strong>Record:</strong>
                     <ul>
-                        <li>Account: mgh</li>
-                        <li>App: dosimetry</li>
-                        <li>Name: patient</li>
+                        <li><strong>Account:</strong> mgh</li>
+                        <li><strong>App:</strong> dosimetry</li>
+                        <li><strong>Name:</strong> patient</li>
                     </ul>
                 </li>
-                <li>Reference: 1369585cb9b423474a5614417290a1f0</li>
-                <li>Size: 183413882</li>
-                <li>Modified By: Kyle Burnett (kburnett)</li>
-                <li>Modified At: 08/15/16 2:20 PM</li>
+                <li><strong>Reference:</strong> <span class="long-id">1369585cb9b423474a5614417290a1f0</span></li>
+                <li><strong>Size:</strong> 183413882</li>
+                <li><strong>Modified By:</strong> Kyle Burnett (kburnett)</li>
+                <li><strong>Modified At:</strong> 08/15/16 2:20 PM</li>
                 <li><input type="checkbox" checked="checked"> Active</li>
                 <div ui-ace="{
                      mode: 'json',
                      onLoad: aceLoaded
                      }" ng-model="body"></div>
-                <button>Save</button>
-                <button><i class="fa fa-download"></i> Download JSON</button>
-                <button><i class="fa fa-download"></i> Download Binary</button>
+                <div class="details-footer">
+                    <button class="save">Save</button>
+                    <button><i class="fa fa-download"></i> JSON</button>
+                    <button><i class="fa fa-download"></i> Binary</button>
+                </div>
             </ul>
         </div>
 

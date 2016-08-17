@@ -1,5 +1,6 @@
 #records-visualizer {
     @include flexbox;
+
     @include flex-dir(column);
 
     background: $offwhite;
@@ -7,6 +8,7 @@
 
     #records-visualizer-header {
         @include flexbox;
+
         @include flex(0 0 auto);
 
         background: white;
@@ -34,12 +36,16 @@
 
     #records-visualizer-hierarchy {
         @include flexbox;
+
         width: calc(100vw - 500px);
         overflow-x: auto;
+
+        &.collapse {
+            width: calc(100vw - 700px);
+        }
     }
 
     .records-level {
-
         @include flex(0 0 auto);
 
         background: $offwhite;
@@ -55,13 +61,13 @@
         }
 
         .records-container {
-
             height: calc(100vh - 104px);
             font-family: 'Gotham-Book', arial, sans-serif;
             overflow-y: auto;
 
             .records-entry {
                 @include flex(0 0 auto);
+
                 border-bottom: 1px solid #cdcfcf;
                 display: block;
                 font-size: .8rem;
@@ -76,12 +82,73 @@
     }
 
     #records-visualizer-details {
-
         @include flex(0 0 auto);
 
         background: $offwhite;
-        border-right: 1px solid #cdcfcf;
+        border-left: 1px solid #cdcfcf;
+        padding: 20px;
         width: 300px;
 
+        &.expand {
+            width: 500px;
+        }
+
+        h3 {
+            color: #7e8181;
+            font-family: 'Gotham-Light', arial, sans-serif;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+
+        span, li {
+            font-family: 'Gotham-Light', arial, sans-serif;
+            font-size: 12px;
+        }
+
+        li {
+            margin-bottom: 15px;
+
+            &.record {
+                li {
+                    border-left: 4px solid #cdcfcf;
+                    font-size: 11px;
+                    padding-left: 5px;
+                }
+
+                ul {
+                    margin-left: 10px;
+                    margin-top: 10px;
+                }
+            }
+        }
+
+        .long-id {
+            font-size: 10px;
+        }
+
+        .ace_editor {
+            margin-bottom: 20px;
+        }
+
+        .details-footer {
+            @include flexbox;
+            @include justify-content(space-between);
+            padding: 10px 0;
+
+            button {
+                @include flex(1 0 auto);
+
+                background: $charcoal;
+                width: 80px;
+
+                &:not(:first-child) {
+                    margin-left: 10px;
+                }
+
+                &.save {
+                    background: $orange;
+                }
+            }
+        }
     }
 }
