@@ -76,11 +76,21 @@
                         border-bottom: 1px solid #cdcfcf;
                         display: block;
                         font-size: .8rem;
-                        padding: 12px;
+                        padding: 8px;
 
                         &:hover {
                             background: white;
                             cursor: pointer;
+                        }
+
+                        &.active {
+                            font-family: 'Gotham-Medium', arial, sans-serif;
+                            &:after {
+                                content: "\f0da";
+                                float: right;
+                                font-family: FontAwesome;
+                                margin-top: 1px;
+                            }
                         }
                     }
                 }
