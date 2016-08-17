@@ -5,6 +5,7 @@
   "dependencies": {
     "angular": "1.4.3",
     "angular-base64": "2.0.5",
+    "angular-material": "1.0.8",
     "angular-resource": "1.4.3",
     "angular-ripple": "*",
     "angular-route": "1.4.3",

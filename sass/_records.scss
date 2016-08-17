@@ -1,0 +1,18 @@
+#records-visualizer {
+    @include flexbox;
+    width: 100%;
+
+    background: $offwhite;
+
+    .title {
+        display: block;
+        background: white;
+        border-bottom: 1px solid #f1f1ef;
+        color: #7e8181;
+        font-family: 'Gotham-Book', arial, sans-serif;
+        line-height: 33px;
+        height: 54px;
+        padding: 10px;
+        width: 100%;
+    }
+}

@@ -11,6 +11,7 @@
         'base64',
         'ngAnimate',
         'ngRoute',
+        'ngMaterial',
         'toastr',
         'ui.ace',
         'ui.router',
@@ -81,6 +82,12 @@
                 url: '/api',
                 templateUrl: './src/templates/api.html',
                 controller: 'apiController'
+            });
+
+            $stateProvider.state('devkit.records', {
+                url: '/records',
+                templateUrl: './src/templates/records.html',
+                controller: 'recordsController'
             });
 
             // --------------------------------------------------
