@@ -1,18 +1,87 @@
 #records-visualizer {
     @include flexbox;
-    width: 100%;
+    @include flex-dir(column);
 
     background: $offwhite;
+    width: 100%;
 
-    .title {
-        display: block;
+    #records-visualizer-header {
+        @include flexbox;
+        @include flex(0 0 auto);
+
         background: white;
-        border-bottom: 1px solid #f1f1ef;
-        color: #7e8181;
-        font-family: 'Gotham-Book', arial, sans-serif;
-        line-height: 33px;
-        height: 54px;
+        border-bottom: 1px solid #cdcfcf;
+        height: 55px;
         padding: 10px;
         width: 100%;
+
+        .title {
+            display: block;
+            color: #7e8181;
+            font-family: 'Gotham-Book', arial, sans-serif;
+            line-height: 33px;
+        }
+
+        i {
+            line-height: 33px;
+            padding: 0 10px;
+        }
+    }
+
+    #records-visualizer-main {
+        @include flexbox;
+    }
+
+    #records-visualizer-hierarchy {
+        @include flexbox;
+        width: calc(100vw - 500px);
+        overflow-x: auto;
+    }
+
+    .records-level {
+
+        @include flex(0 0 auto);
+
+        background: $offwhite;
+        border-right: 1px solid #cdcfcf;
+        width: 300px;
+
+        .filter {
+            input {
+                border: 0;
+                border-bottom: 1px solid #cdcfcf;
+                border-radius: 0;
+            }
+        }
+
+        .records-container {
+
+            height: calc(100vh - 104px);
+            font-family: 'Gotham-Book', arial, sans-serif;
+            overflow-y: auto;
+
+            .records-entry {
+                @include flex(0 0 auto);
+                border-bottom: 1px solid #cdcfcf;
+                display: block;
+                font-size: .8rem;
+                padding: 12px;
+
+                &:hover {
+                    background: white;
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+
+    #records-visualizer-details {
+
+        @include flex(0 0 auto);
+
+        background: $offwhite;
+        border-right: 1px solid #cdcfcf;
+        width: 300px;
+
     }
 }
