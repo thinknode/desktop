@@ -10,12 +10,13 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function recordsController($scope, session, $http, $document, $location, $rootScope, $mdDialog) {
+    function recordsController($scope, session, $http, $q, $location, $rootScope, $mdDialog) {
         
         // --------------------------------------------------
         // Local variables
         
         var deregisterInit;
+        var refreshPromise;
 
         // --------------------------------------------------
         // Local requires
@@ -39,6 +40,7 @@
         // Scope variables
 
         $scope.context = null;
+        $scope.levels = [];
         $scope.body = JSON.stringify({
             "hello": "world"
         }, null, 4);
@@ -54,8 +56,33 @@
             });
         };
 
+        /**
+         * @summary Refreshes the state of the visualizer hierarchy.
+         * @description
+         * This should be used
+         *
+         * @returns {Promise} An angular promise that resolves when the root-level entries have been
+         *   retrieved. It will also resolve if the context is invalid and cannot be used in the
+         *   query.
+         */
         $scope.refresh = function() {
             console.log('refresh');
+            if (refreshPromise) {
+                return refreshPromise;
+            }
+            if (!$scope.context || !$scope.context.test(/^[a-zA-Z0-9]{32}$/)) {
+                return (refreshPromise = $q.resolve());
+            }
+            return (refreshPromise = $http({
+                method: "GET",
+                url: session.url("/rks", null, {
+                    context: $scope.context,
+                    depth: 1
+                }),
+                headers: {
+                    "Authorization": "Bearer " + session.token()
+                }
+            }));
         };
 
         $scope.modifySettings = function(e) {
@@ -88,7 +115,7 @@
         '$scope',
         'session',
         '$http',
-        '$document',
+        '$q',
         '$location',
         '$rootScope',
         '$mdDialog',
