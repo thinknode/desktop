@@ -39,9 +39,20 @@
         // Scope variables
 
         $scope.context = null;
+        $scope.body = JSON.stringify({
+            "hello": "world"
+        }, null, 4);
 
         // --------------------------------------------------
         // Scope methods
+
+        $scope.aceLoaded = function(_editor) {
+            console.log("Ace Loaded");
+            _editor.$blockScrolling = Infinity;
+            _editor.setOptions({
+                maxLines: 500
+            });
+        };
 
         $scope.refresh = function() {
             console.log('refresh');

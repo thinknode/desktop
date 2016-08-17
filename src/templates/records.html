@@ -98,7 +98,29 @@
         </div>
 
         <div id="records-visualizer-details">
-            Some details here:
+            <h3>MR-111-1111</h3>
+            <ul>
+                <li>Id: 806342de83545ad9d0053bca2d9d4435</li>
+                <li>Record:
+                    <ul>
+                        <li>Account: mgh</li>
+                        <li>App: dosimetry</li>
+                        <li>Name: patient</li>
+                    </ul>
+                </li>
+                <li>Reference: 1369585cb9b423474a5614417290a1f0</li>
+                <li>Size: 183413882</li>
+                <li>Modified By: Kyle Burnett (kburnett)</li>
+                <li>Modified At: 08/15/16 2:20 PM</li>
+                <li><input type="checkbox" checked="checked"> Active</li>
+                <div ui-ace="{
+                     mode: 'json',
+                     onLoad: aceLoaded
+                     }" ng-model="body"></div>
+                <button>Save</button>
+                <button><i class="fa fa-download"></i> Download JSON</button>
+                <button><i class="fa fa-download"></i> Download Binary</button>
+            </ul>
         </div>
 
     </div>
