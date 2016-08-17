@@ -100,22 +100,25 @@
     <!-- Records Settings modal -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <script type="text/ng-template" id="recordsSettings.tmpl.html">
-        <div class="modal-content">
+        <div class="modal-content records-modal">
             <div class="modal-header">
-                <button type="button" class="close" ng-click="cancel($event)"><span>&times;</span></button>
+                Context
             </div>
-            <div class="modal-body">
+            <div class="modal-body context-body">
                 <form name="settingsForm">
                     <div id="form-context" class="form-group has-feedback" ng-class="{'has-error': hasError(settingsForm, 'context')}">
-                        <label for="context" class="control-label">Context:</label>
                         <div>
-                            <input id="context" name="context" type="text" class="form-control" ng-model="context" ng-change="initialize()" placeholder="Context" ng-maxlength="32" required>
+                            <input id="context" name="context" type="text" class="form-control" ng-model="context" ng-change="initialize()" placeholder="Add Context" ng-maxlength="32" required>
                             <!-- <span id="error-context-required" ng-show="hasError(settingsForm, 'context', 'required')" class="help-block ng-hide">Please enter a context.</span>
                             <span id="error-structure-name-maxlength" ng-show="hasError(settingsForm, 'name', 'maxlength')" class="help-block ng-hide">Context names must not exceed 32 characters.</span>
                             <span id="error-context-glyphicon" class="glyphicon glyphicon-remove form-control-feedback text-danger" ng-show="hasError(settingsForm, 'context')" aria-hidden="true"></span> -->
                         </div>
                     </div>
                 </form>
+            </div>
+            <div class="modal-footer">
+                <div class="spacer"></div>
+                <button type="button" class="close" ng-click="cancel($event)">Update Context</button>
             </div>
         </div>
     </script>

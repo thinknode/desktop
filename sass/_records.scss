@@ -1,6 +1,5 @@
 #records-visualizer {
     @include flexbox;
-
     @include flex-dir(column);
 
     background: $offwhite;
@@ -8,7 +7,6 @@
 
     #records-visualizer-header {
         @include flexbox;
-
         @include flex(0 0 auto);
 
         background: white;
@@ -25,6 +23,9 @@
         }
 
         i {
+            border: 1px solid #cdcfcf;
+            border-radius: 4px;
+            font-size: 20px;
             line-height: 33px;
             padding: 0 10px;
         }
@@ -32,50 +33,56 @@
 
     #records-visualizer-main {
         @include flexbox;
-    }
 
-    #records-visualizer-hierarchy {
-        @include flexbox;
+        #records-visualizer-hierarchy {
+            @include flexbox;
 
-        width: calc(100vw - 500px);
-        overflow-x: auto;
+            // set the container width and make scrollable
+            // remove the fixed widths for left nav and meta panel
+            width: calc(100vw - 500px);
+            overflow-x: auto;
 
-        &.collapse {
-            width: calc(100vw - 700px);
-        }
-    }
-
-    .records-level {
-        @include flex(0 0 auto);
-
-        background: $offwhite;
-        border-right: 1px solid #cdcfcf;
-        width: 300px;
-
-        .filter {
-            input {
-                border: 0;
-                border-bottom: 1px solid #cdcfcf;
-                border-radius: 0;
+            // reduce the container width when meta panel is expanded
+            // remove the fixed widths for left nav and "expanded" meta panel
+            &.collapse {
+                width: calc(100vw - 700px);
             }
-        }
 
-        .records-container {
-            height: calc(100vh - 104px);
-            font-family: 'Gotham-Book', arial, sans-serif;
-            overflow-y: auto;
-
-            .records-entry {
+            .records-level {
                 @include flex(0 0 auto);
 
-                border-bottom: 1px solid #cdcfcf;
-                display: block;
-                font-size: .8rem;
-                padding: 12px;
+                background: $offwhite;
+                border-right: 1px solid #cdcfcf;
+                width: 300px;
 
-                &:hover {
-                    background: white;
-                    cursor: pointer;
+                .filter {
+                    input {
+                        border: 0;
+                        border-bottom: 1px solid #cdcfcf;
+                        border-radius: 0;
+                    }
+                }
+
+                .records-container {
+                    // set the container height and make scrollable
+                    // remove the fixed heights for header, filter box, and scrollbar
+                    height: calc(100vh - 104px);
+                    font-family: 'Gotham-Book', arial, sans-serif;
+                    overflow-y: auto;
+
+                    .records-entry {
+                        @include flex(0 0 auto);
+
+                        border-bottom: 1px solid #cdcfcf;
+                        display: block;
+                        font-size: .8rem;
+                        padding: 12px;
+
+                        &:hover {
+                            background: white;
+                            cursor: pointer;
+                        }
+                    }
                 }
             }
         }
@@ -89,6 +96,7 @@
         padding: 20px;
         width: 300px;
 
+        // reset the container width when meta panel expands
         &.expand {
             width: 500px;
         }
@@ -133,6 +141,7 @@
         .details-footer {
             @include flexbox;
             @include justify-content(space-between);
+
             padding: 10px 0;
 
             button {
@@ -150,5 +159,24 @@
                 }
             }
         }
+    }
+}
+
+.records-modal {
+    .modal-header, .modal-footer {
+        padding: 15px;
+        min-width: 400px;
+    }
+
+    .modal-footer {
+        @include flexbox;
+        button {
+            background: $orange;
+        }
+    }
+
+    .context-body {
+        padding: 0 15px;
+        min-width: 400px;
     }
 }
