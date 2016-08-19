@@ -14,84 +14,49 @@
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <div id="records-visualizer-main">
         
-        <div id="records-visualizer-hierarchy">
+        <div id="records-visualizer-hierarchy" ng-click="focus='hierarchy'" ng-class="{'collapse': focus==='details'}">
 
-            <div class="records-level">
-                <div class="filter">
-                    <input type="text" placeholder="Filter Records">
+            <div class="records-level" ng-repeat="level in levels">
+                <div class="filter" ng-if="level.entries.length > 0">
+                    <input type="text" placeholder="Filter Records" ng-model="level.filter">
                 </div>
-                <div class="records-container">
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry active">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
+                <div class="records-container" ng-if="level.entries.length > 0">
+                    <span class="records-entry" ng-class="{'active': entry.selected}" ng-repeat="entry in level.entries | entry:level.filter" ng-click="selectEntry($parent.$index, $index)">{{ entry.name }}</span>
+                    <span class="records-loading" ng-if="level.next"><i class="fa fa-spinner fa-spin"></i></span>
                 </div>
-            </div>
-
-            <div class="records-level">
-                <div class="filter">
-                    <input type="text" placeholder="Filter Records">
-                </div>
-                <div class="records-container">
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-                    <span class="records-entry">fsdfsdfsdfsdfsfsdf</span>
-
-                </div>
+                <span ng-if="level.entries.length === 0">No entries found</span>
             </div>
 
         </div>
 
-        <div id="records-visualizer-details">
-            <h3>MR-111-1111</h3>
-            <ul>
-                <li><strong>Id:</strong> <span class="long-id">806342de83545ad9d0053bca2d9d4435</span></li>
-                <li class="record"><strong>Record:</strong>
-                    <ul>
-                        <li><strong>Account:</strong> mgh</li>
-                        <li><strong>App:</strong> dosimetry</li>
-                        <li><strong>Name:</strong> patient</li>
-                    </ul>
-                </li>
-                <li><strong>Reference:</strong> <span class="long-id">1369585cb9b423474a5614417290a1f0</span></li>
-                <li><strong>Size:</strong> 183413882</li>
-                <li><strong>Modified By:</strong> Kyle Burnett (kburnett)</li>
-                <li><strong>Modified At:</strong> 08/15/16 2:20 PM</li>
-                <li><input type="checkbox" checked="checked"> Active</li>
-                <div ui-ace="{
-                     mode: 'json',
-                     onLoad: aceLoaded
-                     }" ng-model="body"></div>
-                <div class="details-footer">
-                    <button class="save">Save</button>
-                    <button><i class="fa fa-download"></i> JSON</button>
-                    <button><i class="fa fa-download"></i> Binary</button>
-                </div>
-            </ul>
+        <div id="records-visualizer-details" ng-click="focus='details'" ng-class="{'expand': focus==='details'}">
+            <div ng-if="selected">
+                <h3>{{ selected.name }}</h3>
+                <ul>
+                    <li><strong>Id:</strong> <span class="long-id">{{ selected.id }}</span></li>
+                    <li class="record"><strong>Record:</strong>
+                        <ul>
+                            <li><strong>Account:</strong> {{ selected.record.account }}</li>
+                            <li><strong>App:</strong> {{ selected.record.app }}</li>
+                            <li><strong>Name:</strong> {{ selected.record.name }}</li>
+                        </ul>
+                    </li>
+                    <li><strong>Reference:</strong> <span class="long-id">{{ selected.immutable }}</span></li>
+                    <li ng-if="selected.data"><strong>Size:</strong> {{ selected.data.size }}</li>
+                    <li><strong>Modified By:</strong> {{ selected.modified_by.name }} ({{ selected.modified_by.username }})</li>
+                    <li><strong>Modified At:</strong> {{ selected.modified_at | date:'medium' }}</li>
+                    <!-- <li><input type="checkbox" checked="checked"> Active</li> -->
+                    <div ui-ace="{
+                         mode: 'json',
+                         onLoad: aceLoaded
+                         }" ng-model="selected.data.body" ng-if="selected.data && selected.data.size <= 5000000"></div>
+                    <div class="details-footer">
+                        <button class="save">Save</button>
+                        <button ng-click="save('json')" ng-disabled="selected.data.size > 5000000"><i class="fa fa-download"></i> JSON</button>
+                        <button ng-click="save('octet-stream')"><i class="fa fa-download"></i> Binary</button>
+                    </div>
+                </ul>
+            </div>
         </div>
 
     </div>
@@ -108,7 +73,7 @@
                 <form name="settingsForm">
                     <div id="form-context" class="form-group has-feedback" ng-class="{'has-error': hasError(settingsForm, 'context')}">
                         <div>
-                            <input id="context" name="context" type="text" class="form-control" ng-model="context" ng-change="initialize()" placeholder="Add Context" ng-maxlength="32" required>
+                            <input id="context" name="context" type="text" class="form-control" ng-model="context" ng-change="refresh(true)" placeholder="Add Context" ng-maxlength="32" required>
                             <!-- <span id="error-context-required" ng-show="hasError(settingsForm, 'context', 'required')" class="help-block ng-hide">Please enter a context.</span>
                             <span id="error-structure-name-maxlength" ng-show="hasError(settingsForm, 'name', 'maxlength')" class="help-block ng-hide">Context names must not exceed 32 characters.</span>
                             <span id="error-context-glyphicon" class="glyphicon glyphicon-remove form-control-feedback text-danger" ng-show="hasError(settingsForm, 'context')" aria-hidden="true"></span> -->
@@ -118,7 +83,7 @@
             </div>
             <div class="modal-footer">
                 <div class="spacer"></div>
-                <button type="button" class="close" ng-click="cancel($event)">Update Context</button>
+                <button type="button" class="close" ng-click="close()">Close</button>
             </div>
         </div>
     </script>

@@ -64,6 +64,9 @@
                 }
 
                 .records-container {
+                    @include flexbox;
+                    @include flex-direction(column);
+                    @include align-items(stretch);
                     // set the container height and make scrollable
                     // remove the fixed heights for header, filter box, and scrollbar
                     height: calc(100vh - 104px);
@@ -93,6 +96,15 @@
                             }
                         }
                     }
+
+                    .records-loading {
+                        @include flexbox;
+                        @include flex(0 0 auto);
+                        @include flex-direction(column);
+                        @include align-items(center);
+
+                        padding: 8px;
+                    }
                 }
             }
         }
@@ -118,7 +130,7 @@
             margin-bottom: 10px;
         }
 
-        span, li {
+        li {
             font-family: 'Gotham-Light', arial, sans-serif;
             font-size: 12px;
         }
@@ -166,6 +178,12 @@
 
                 &.save {
                     background: $orange;
+                }
+
+                &:disabled {
+                    cursor: not-allowed;
+                    background: $grey;
+                    color: $tan;
                 }
             }
         }
