@@ -258,7 +258,7 @@
                     }
                 }
                 // Otherwise, reset the selected records.
-                map = $scope.storage.get('selectedRecords');
+                map = $scope.storage.get('selectedRecords') || {};
                 map[$scope.context] = [];
                 $scope.storage.set('selectedRecords', map);
             }).catch(function(res) {
@@ -473,10 +473,7 @@
                     }
                 } else {
                     // Add to storage
-                    map = $scope.storage.get('selectedRecords');
-                    if (!map) {
-                        map = {};
-                    }
+                    map = $scope.storage.get('selectedRecords') || {};
                     var selected = map[$scope.context] = (map[$scope.context] || []).slice(0, level);
                     selected.push($scope.selected.id);
                     $scope.storage.set('selectedRecords', map);
