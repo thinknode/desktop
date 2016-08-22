@@ -35,7 +35,8 @@
             deregisterInit();
             $scope.context = $scope.storage.get('context');
             $scope.inactive = $scope.storage.get('inactive') || false;
-            $scope.refresh(false, $scope.storage.get('selectedRecords')[$scope.context]);
+            var map = $scope.storage.get('selectedRecords') || {};
+            $scope.refresh(false, map[$scope.context]);
         };
 
         // --------------------------------------------------
