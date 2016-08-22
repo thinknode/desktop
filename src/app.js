@@ -16,7 +16,8 @@
         'ui.ace',
         'ui.router',
         'ngNotificationsBar',
-        'angular-ladda'
+        'angular-ladda',
+        'duScroll'
     ]);
 
     // Configure module routes

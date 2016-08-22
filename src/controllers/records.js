@@ -22,6 +22,7 @@
         // --------------------------------------------------
         // Local requires
 
+        var _ = require('lodash');
         var fs = require('fs');
         var msgpack = require('msgpack5')({
             forceFloat64: true
@@ -33,7 +34,8 @@
         var init = function() {
             deregisterInit();
             $scope.context = $scope.storage.get('context');
-            $scope.refresh();
+            $scope.inactive = $scope.storage.get('inactive') || false;
+            $scope.refresh(false, $scope.storage.get('selectedRecords')[$scope.context]);
         };
 
         // --------------------------------------------------
@@ -98,6 +100,7 @@
             if (typeof memcache[key] !== "undefined") {
                 return $q.resolve(memcache[key]);
             } else {
+                memcache[key] = [];
                 return $http({
                     method: "GET",
                     url: session.url("/iss/:id/immutable", {
@@ -110,28 +113,45 @@
                     }
                 }).then(function(res) {
                     if (res.status === 200) {
-                        memcache[key] = res.data.id;
-                        return memcache[key];
+                        memcache[key].immutable = res.data.id;
                     } else if (res.status === 202) {
                         return $q.reject(new Error("Incomplete calculation for id: " + id));
                     } else if (res.status === 204) {
                         return $q.reject(new Error("Failed calculation for id: " + id));
                     }
+                }).then(function() {
+                    return $http({
+                        method: "HEAD",
+                        url: session.url("/iss/:id", {
+                            "id": id
+                        }, {
+                            "context": $scope.context
+                        }),
+                        headers: {
+                            "Authorization": "Bearer " + session.token()
+                        }
+                    });
+                }).then(function(res) {
+                    memcache[key].type = res.headers("Thinknode-Type");
+                    return memcache[key];
                 });
             }
         }
 
         function getObject(id) {
-            return resolveImmutable(id).then(function(immutable) {
-                return resolveData(immutable);
+            return resolveImmutable(id).then(function(obj) {
+                return resolveData(obj.immutable).then(function(data) {
+                    data.type = obj.type;
+                    return data;
+                });
             });
         }
 
         function queryEntries(parent, start) {
             var query = {
                 context: $scope.context,
-                depth: 0,
-                limit: 10
+                inactive: $scope.inactive,
+                depth: 0
             };
             if (parent) {
                 query.parent = parent;
@@ -153,6 +173,7 @@
         // Scope variables
 
         $scope.context = null;
+        $scope.inactive = false;
         $scope.levels = [];
         $scope.selected = null;
         $scope.focus = "hierarchy";
@@ -190,27 +211,63 @@
          *   retrieved. It will also resolve if the context is invalid and cannot be used in the
          *   query.
          */
-        $scope.refresh = function(force) {
+        $scope.refresh = function(force, selected) {
             if (refreshPromise && !force) {
                 return refreshPromise;
             }
+            $scope.selected = null;
+            $scope.focus = "hierarchy";
+            $scope.levels = [];
+            $scope.error = "";
             if (!$scope.context || !/^[a-zA-Z0-9]{32}$/.test($scope.context)) {
+                $scope.error = "Invalid context provided.";
                 return (refreshPromise = $q.resolve());
             }
+            var level = {
+                "parent": null,
+                "next": true,
+                "entries": [],
+                "filter": ""
+            };
             return (refreshPromise = queryEntries().then(function(res) {
                 // Deserialize dates
                 var data = deserialize(res.data);
                 // Add initial level
                 $scope.levels = [];
-                var level = {
-                    "parent": null,
-                    "next": res.headers('Thinknode-Next'),
-                    "entries": data,
-                    "filter": ""
-                };
+                level.next = res.headers('Thinknode-Next');
+                level.entries = data;
                 $scope.levels.push(level);
                 if (level.next) {
                     return $scope.nextPage($scope.levels.length - 1);
+                }
+            }).then(function() {
+                var map;
+                if (selected) {
+                    var found, remembered = selected.shift();
+                    for (var i = 0; i < level.entries.length; ++i) {
+                        if (level.entries[i].id === remembered) {
+                            found = $scope.selected = level.entries[i];
+                            level.entries[i].selected = true;
+                        } else {
+                            level.entries[i].selected = false;
+                        }
+                    }
+                    if (found) {
+                        return $scope.selectEntry(0, found, selected);
+                    }
+                }
+                // Otherwise, reset the selected records.
+                map = $scope.storage.get('selectedRecords');
+                map[$scope.context] = [];
+                $scope.storage.set('selectedRecords', map);
+            }).catch(function(res) {
+                $scope.selected = null;
+                $scope.focus = "hierarchy";
+                $scope.levels = [];
+                if (res.data && res.data.message) {
+                    $scope.error = res.data.message;
+                } else {
+                    $scope.error = "An unexpected error ocurred.";
                 }
             }));
         };
@@ -234,6 +291,94 @@
                 },
                 onRemoving: function() {
                     $scope.open = false;
+                    $scope.storage.set('context', $scope.context);
+                    $scope.storage.set('inactive', $scope.inactive);
+                }
+            });
+        };
+
+        /**
+         * @summary Opens the modal to modify the Visualizer settings.
+         *
+         * @param {object} e - The event object.
+         */
+        $scope.editReference = function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $mdDialog.show({
+                clickOutsideToClose: true,
+                scope: $scope,
+                targetEvent: e,
+                templateUrl: 'entryReference.tmpl.html',
+                preserveScope: true,
+                onShowing: function() {
+                    $scope.open = true;
+                },
+                onRemoving: function() {
+                    $scope.open = false;
+                }
+            });
+        };
+
+        /**
+         * @summary Saves the current state of the entry.
+         */
+        $scope.save = function() {
+            var promise = $q.resolve();
+            if ($scope.selected.edit.data.body !== $scope.selected.data.body) {
+                promise = promise.then(function() {
+                    return $http({
+                        method: "POST",
+                        url: session.url("/iss/:type", {
+                            type: $scope.selected.edit.data.type
+                        }, {
+                            context: $scope.context
+                        }),
+                        data: $scope.selected.edit.data.body,
+                        headers: {
+                            "Authorization": "Bearer " + session.token(),
+                            "Content-Type": "application/json"
+                        }
+                    });
+                }).then(function(res) {
+                    $scope.selected.edit.immutable = res.data.id;
+                });
+            }
+            return promise.then(function() {
+                return $http({
+                    method: "PUT",
+                    url: session.url("/rks/:id", {
+                        id: $scope.selected.id
+                    }, {
+                        context: $scope.context
+                    }),
+                    data: {
+                        name: $scope.selected.name,
+                        parent: $scope.selected.parent,
+                        immutable: $scope.selected.edit.immutable,
+                        active: $scope.selected.edit.active,
+                        revision: $scope.selected.revision
+                    },
+                    headers: {
+                        "Authorization": "Bearer " + session.token()
+                    }
+                });
+            }).then(function(res) {
+                var selected = $scope.storage.get('selectedRecords')[$scope.context];
+                var level = selected.length - 2;
+                var entry, entries = $scope.levels[level].entries;
+                var test = selected[level];
+                for (var i = 0; i < entries.length; ++i) {
+                    if (entries[i].id === test) {
+                        entry = entries[i];
+                    }
+                }
+                return $scope.selectEntry(level, entry, selected.slice(selected.length - 1));
+            }).catch(function(res) {
+                if (res.data && res.data.message) {
+                    $scope.selected.error = res.data.message;
+                } else {
+                    $scope.selected.error = "An unexpected error ocurred.";
                 }
             });
         };
@@ -267,32 +412,81 @@
          *
          * @param {number} level - The index representing the index of the level in which the
          *   selected entry belongs.
-         * @param {number} entry - The index representing the index of the selected entry in the
-         *   list of entries.
+         * @param {object} entry - The selected entry.
          */
-        $scope.selectEntry = function(level, entry) {
+        $scope.selectEntry = function(level, entry, list) {
             $scope.levels = $scope.levels.slice(0, level + 1);
             var entries = $scope.levels[level].entries;
             for (var i = 0; i < entries.length; ++i) {
-                entries[i].selected = (i === entry);
+                entries[i].selected = (entries[i].id === entry.id);
+                entries[i].edit = {
+                    immutable: entries[i].immutable,
+                    active: entries[i].active
+                };
             }
-            $scope.selected = entries[entry];
+            $scope.selected = entry;
+            // Add new level
+            var new_level = {
+                "parent": $scope.selected.id,
+                "next": true,
+                "entries": [],
+                "filter": ""
+            };
+            $scope.levels.push(new_level);
             return getObject($scope.selected.immutable).then(function(obj) {
                 $scope.selected.data = obj;
+                $scope.selected.edit.data = _.cloneDeep(obj);
                 return queryEntries($scope.selected.id);
             }).then(function(res) {
                 // Deserialize dates
                 var data = deserialize(res.data);
-                // Add new level
-                var level = {
-                    "parent": $scope.selected.id,
-                    "next": res.headers('Thinknode-Next'),
-                    "entries": data,
-                    "filter": ""
-                };
-                $scope.levels.push(level);
-                if (level.next) {
+                // Set level properties
+                new_level.next = res.headers("Thinknode-Next");
+                new_level.entries = data;
+                // Scroll to new level
+                var container = angular.element("#records-visualizer-hierarchy");
+                var element = angular.element(".records-level:last");
+                container.scrollTo(element.position().left);
+                // Get next entries
+                if (new_level.next) {
                     return $scope.nextPage($scope.levels.length - 1);
+                }
+            }).then(function() {
+                var map;
+                if (list) {
+                    var found, remembered = list.shift();
+                    for (var i = 0; i < new_level.entries.length; ++i) {
+                        if (new_level.entries[i].id === remembered) {
+                            found = $scope.selected = new_level.entries[i];
+                            new_level.entries[i].selected = true;
+                        } else {
+                            new_level.entries[i].selected = false;
+                        }
+                    }
+                    if (found) {
+                        return $scope.selectEntry(level + 1, found, list);
+                    } else {
+                        map = $scope.storage.get('selectedRecords');
+                        map[$scope.context] = map[$scope.context].slice(0, level + 1);
+                        $scope.storage.set('selectedRecords', map);
+                    }
+                } else {
+                    // Add to storage
+                    map = $scope.storage.get('selectedRecords');
+                    if (!map) {
+                        map = {};
+                    }
+                    var selected = map[$scope.context] = (map[$scope.context] || []).slice(0, level);
+                    selected.push($scope.selected.id);
+                    $scope.storage.set('selectedRecords', map);
+                }
+            }).catch(function(res) {
+                if (res instanceof Error) {
+                    $scope.selected.error = res.message;
+                } else if (res.data && res.data.message) {
+                    $scope.selected.error = res.data.message;
+                } else {
+                    $scope.selected.error = "An unexpected error ocurred.";
                 }
             });
         };
@@ -302,7 +496,7 @@
          *
          * @param {string} type - The type of the data (either "json" or "octet-stream").
          */
-        $scope.save = function(type) {
+        $scope.download = function(type) {
             dialog.showSaveDialog(function(filename) {
                 if (typeof filename === "undefined") {
                     return;
@@ -319,7 +513,7 @@
                             "Accept": "application/" + type
                         }
                     }).on("error", function(e) {
-                        console.log("error");
+                        $scope.error = e.message || "Unable to download to file";
                     }).pipe(fs.createWriteStream(filename));
                 });
             });

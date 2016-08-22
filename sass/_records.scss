@@ -48,6 +48,10 @@
                 width: calc(100vw - 700px);
             }
 
+            tip {
+                z-index: 9999;
+            }
+
             .records-level {
                 @include flex(0 0 auto);
 

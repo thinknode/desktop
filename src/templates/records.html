@@ -4,8 +4,9 @@
     <!-- Header -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <div id="records-visualizer-header">
-        <span id="records-settings-header" class="title">Visualizer</span>
+        <span id="records-settings-header" class="title">Records Explorer</span>
         <div class="spacer"></div>
+        <span ng-if="error">{{ error }}</span>
         <i id="records-settings-target" class="fa fa-cog" ng-click="modifySettings($event)"></i>
     </div>
     <!-- -->
@@ -16,15 +17,15 @@
         
         <div id="records-visualizer-hierarchy" ng-click="focus='hierarchy'" ng-class="{'collapse': focus==='details'}">
 
-            <div class="records-level" ng-repeat="level in levels">
+            <div class="records-level" ng-repeat="level in levels" id="level-{{$index}}" scroll="level-{{$index}}">
                 <div class="filter" ng-if="level.entries.length > 0">
                     <input type="text" placeholder="Filter Records" ng-model="level.filter">
                 </div>
                 <div class="records-container" ng-if="level.entries.length > 0">
-                    <span class="records-entry" ng-class="{'active': entry.selected}" ng-repeat="entry in level.entries | entry:level.filter" ng-click="selectEntry($parent.$index, $index)">{{ entry.name }}</span>
+                    <span class="records-entry" ng-class="{'active': entry.selected}" ng-repeat="entry in level.entries | entry:level.filter" ng-click="selectEntry($parent.$index, entry)" tooltips tooltip-smart="true" tooltip-template="{{entry.modified_at | date:'medium'}} by {{entry.modified_by.username}}">{{ entry.name }}</span>
                     <span class="records-loading" ng-if="level.next"><i class="fa fa-spinner fa-spin"></i></span>
                 </div>
-                <span ng-if="level.entries.length === 0">No entries found</span>
+                <span ng-if="level.entries.length === 0 && !level.next">No entries found</span>
             </div>
 
         </div>
@@ -41,19 +42,20 @@
                             <li><strong>Name:</strong> {{ selected.record.name }}</li>
                         </ul>
                     </li>
-                    <li><strong>Reference:</strong> <span class="long-id">{{ selected.immutable }}</span></li>
-                    <li ng-if="selected.data"><strong>Size:</strong> {{ selected.data.size }}</li>
+                    <li><strong>Reference:</strong> <span class="long-id">{{ selected.edit.immutable }}</span> <button ng-click="editReference($event)"><i class="fa fa-pencil"></i></button></li>
+                    <li ng-if="selected.edit.data"><strong>Size:</strong> {{ selected.edit.data.size }}</li>
                     <li><strong>Modified By:</strong> {{ selected.modified_by.name }} ({{ selected.modified_by.username }})</li>
                     <li><strong>Modified At:</strong> {{ selected.modified_at | date:'medium' }}</li>
-                    <!-- <li><input type="checkbox" checked="checked"> Active</li> -->
+                    <li><input type="checkbox" ng-model="selected.edit.active"> Active</li>
                     <div ui-ace="{
                          mode: 'json',
                          onLoad: aceLoaded
-                         }" ng-model="selected.data.body" ng-if="selected.data && selected.data.size <= 5000000"></div>
+                         }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
+                    <span ng-if="selected.error">{{ selected.error }}</span>
                     <div class="details-footer">
-                        <button class="save">Save</button>
-                        <button ng-click="save('json')" ng-disabled="selected.data.size > 5000000"><i class="fa fa-download"></i> JSON</button>
-                        <button ng-click="save('octet-stream')"><i class="fa fa-download"></i> Binary</button>
+                        <button class="save" ng-disabled="selected.edit.data.body === selected.data.body && selected.edit.active === selected.active && selected.edit.immutable === selected.immutable" ng-click="save()">Save<span ng-if="selected.edit.data.body !== selected.data.body || selected.edit.active !== selected.active || selected.edit.immutable !== selected.immutable">*</span></button>
+                        <button ng-click="download('json')" ng-disabled="selected.data.size > 5000000"><i class="fa fa-download"></i> JSON</button>
+                        <button ng-click="download('octet-stream')"><i class="fa fa-download"></i> Binary</button>
                     </div>
                 </ul>
             </div>
@@ -67,16 +69,48 @@
     <script type="text/ng-template" id="recordsSettings.tmpl.html">
         <div class="modal-content records-modal">
             <div class="modal-header">
-                Context
+                Settings
             </div>
             <div class="modal-body context-body">
                 <form name="settingsForm">
                     <div id="form-context" class="form-group has-feedback" ng-class="{'has-error': hasError(settingsForm, 'context')}">
                         <div>
-                            <input id="context" name="context" type="text" class="form-control" ng-model="context" ng-change="refresh(true)" placeholder="Add Context" ng-maxlength="32" required>
+                            <label>Context</label>
+                            <input name="context" type="text" class="form-control" ng-model="context" ng-change="refresh(true)" placeholder="Add Context" ng-maxlength="32" required>
                             <!-- <span id="error-context-required" ng-show="hasError(settingsForm, 'context', 'required')" class="help-block ng-hide">Please enter a context.</span>
                             <span id="error-structure-name-maxlength" ng-show="hasError(settingsForm, 'name', 'maxlength')" class="help-block ng-hide">Context names must not exceed 32 characters.</span>
                             <span id="error-context-glyphicon" class="glyphicon glyphicon-remove form-control-feedback text-danger" ng-show="hasError(settingsForm, 'context')" aria-hidden="true"></span> -->
+                        </div>
+                    </div>
+                    <div id="form-context" class="form-group has-feedback" ng-class="{'has-error': hasError(settingsForm, 'context')}">
+                        <div>
+                            <input id="context" name="context" type="checkbox" class="form-control" ng-model="inactive" ng-change="refresh(true)">
+                            <label>Include Inactive</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="spacer"></div>
+                <button type="button" class="close" ng-click="close()">Close</button>
+            </div>
+        </div>
+    </script>
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Record Entry Reference modal -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <script type="text/ng-template" id="entryReference.tmpl.html">
+        <div class="modal-content records-modal">
+            <div class="modal-header">
+                Reference
+            </div>
+            <div class="modal-body context-body">
+                <form name="settingsForm">
+                    <div id="form-context" class="form-group has-feedback" ng-class="{'has-error': hasError(settingsForm, 'context')}">
+                        <div>
+                            <label>Reference</label>
+                            <input name="reference" type="text" class="form-control" ng-model="selected.edit.immutable" placeholder="Edit Reference Id" ng-maxlength="32" required>
                         </div>
                     </div>
                 </form>
