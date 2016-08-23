@@ -10,7 +10,7 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function recordsController($scope, session, $http, $q, $location, $rootScope, $mdDialog) {
+    function recordsController($scope, session, $http, $q, $location, $rootScope, $timeout, $mdDialog) {
 
         // --------------------------------------------------
         // Local variables
@@ -517,6 +517,14 @@
             });
         };
 
+        $scope.rescroll = function() {
+            $timeout(function() {
+                var container = angular.element("#records-visualizer-hierarchy");
+                var elements = angular.element(".records-level");
+                container.scrollTo(elements.length * elements.width());
+            }, 200);
+        };
+
         // --------------------------------------------------
         // Initialization
         deregisterInit = $rootScope.$on('initialized', init);
@@ -614,6 +622,7 @@
         '$q',
         '$location',
         '$rootScope',
+        '$timeout',
         '$mdDialog',
         recordsController
     ]).filter('entry', entryFilter);
