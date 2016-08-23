@@ -138,6 +138,15 @@
         padding: 15px;
         width: 300px;
 
+
+        .details-content {
+            // set the container height and make scrollable
+            // remove the fixed heights for header, filter box, and scrollbar
+            height: calc(100vh - 135px);
+            overflow-y: auto;
+        }
+
+
         // reset the container width when meta panel expands
         &.expand {
             width: 500px;
@@ -203,6 +212,9 @@
         .details-footer {
             @include flexbox;
             @include justify-content(space-between);
+
+            border-top: 1px solid #cdcfcf;
+            padding-top: 15px;
 
             button {
                 @include flex(1 0 auto);

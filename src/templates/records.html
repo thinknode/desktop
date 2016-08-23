@@ -31,7 +31,7 @@
         </div>
 
         <div id="records-visualizer-details" ng-click="focus='details';rescroll()" ng-class="{'expand': focus==='details'}">
-            <div ng-if="selected">
+            <div class="details-content" ng-if="selected">
                 <h3>{{ selected.name }}</h3>
                 <ul>
                     <li><strong>Id:</strong> <span class="long-id">{{ selected.id }}</span></li>
@@ -52,13 +52,12 @@
                     <li><strong>Modified At:</strong> {{ selected.modified_at | date:'medium' }}</li>
                     <li><input type="checkbox" ng-model="selected.edit.active"> Active</li>
                 </ul>
+                <div ui-ace="{
+                     mode: 'json',
+                     onLoad: aceLoaded
+                     }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
+                <span class="details-error" ng-if="selected.error">{{ selected.error }}</span>
             </div>
-            <div ui-ace="{
-                 mode: 'json',
-                 onLoad: aceLoaded
-                 }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
-            <span class="details-error" ng-if="selected.error">{{ selected.error }}</span>
-            <div class="spacer"></div>
             <div class="details-footer">
                 <button class="save" ng-disabled="selected.edit.data.body === selected.data.body && selected.edit.active === selected.active && selected.edit.immutable === selected.immutable" ng-click="save()">Save<span ng-if="selected.edit.data.body !== selected.data.body || selected.edit.active !== selected.active || selected.edit.immutable !== selected.immutable">*</span></button>
                 <button ng-click="download('json')" ng-disabled="selected.data.size > 5000000"><i class="fa fa-download"></i> JSON</button>
