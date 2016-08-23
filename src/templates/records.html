@@ -22,7 +22,7 @@
                     <input type="text" placeholder="Filter Records" ng-model="level.filter">
                 </div>
                 <div class="records-container" ng-if="level.entries.length > 0">
-                    <span class="records-entry" ng-class="{'active': entry.selected}" ng-repeat="entry in level.entries | entry:level.filter" ng-click="selectEntry($parent.$index, entry)" tooltips tooltip-smart="true" tooltip-template="{{entry.modified_at | date:'medium'}} by {{entry.modified_by.username}}">{{ entry.name }}</span>
+                    <span class="records-entry" ng-class="{'active': entry.selected}" ng-repeat="entry in level.entries | entry:level.filter" ng-click="selectEntry($parent.$index, entry)">{{ entry.name }}</span>
                     <span class="records-loading" ng-if="level.next"><i class="fa fa-spinner fa-spin"></i></span>
                 </div>
                 <span class="not-found" ng-if="level.entries.length === 0 && !level.next">No child entries found</span>
