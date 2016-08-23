@@ -6,7 +6,7 @@
     <div id="records-visualizer-header">
         <span id="records-settings-header" class="title">Records Explorer</span>
         <div class="spacer"></div>
-        <span ng-if="error">{{ error }}</span>
+        <span class="header-error" ng-if="error">{{ error }}</span>
         <i id="records-settings-target" class="fa fa-cog" ng-click="modifySettings($event)"></i>
     </div>
     <!-- -->
@@ -25,7 +25,7 @@
                     <span class="records-entry" ng-class="{'active': entry.selected}" ng-repeat="entry in level.entries | entry:level.filter" ng-click="selectEntry($parent.$index, entry)" tooltips tooltip-smart="true" tooltip-template="{{entry.modified_at | date:'medium'}} by {{entry.modified_by.username}}">{{ entry.name }}</span>
                     <span class="records-loading" ng-if="level.next"><i class="fa fa-spinner fa-spin"></i></span>
                 </div>
-                <span ng-if="level.entries.length === 0 && !level.next">No entries found</span>
+                <span class="not-found" ng-if="level.entries.length === 0 && !level.next">No child entries found</span>
             </div>
 
         </div>
@@ -35,29 +35,34 @@
                 <h3>{{ selected.name }}</h3>
                 <ul>
                     <li><strong>Id:</strong> <span class="long-id">{{ selected.id }}</span></li>
-                    <li class="record"><strong>Record:</strong>
+                    <li class="record">
+                        <strong>Record:</strong>
                         <ul>
                             <li><strong>Account:</strong> {{ selected.record.account }}</li>
                             <li><strong>App:</strong> {{ selected.record.app }}</li>
                             <li><strong>Name:</strong> {{ selected.record.name }}</li>
                         </ul>
                     </li>
-                    <li><strong>Reference:</strong> <span class="long-id">{{ selected.edit.immutable }}</span> <button ng-click="editReference($event)"><i class="fa fa-pencil"></i></button></li>
+                    <li>
+                        <strong>Reference:</strong> <span class="long-id">{{ selected.edit.immutable }}</span>
+                        <div><button ng-click="editReference($event)"><i class="fa fa-pencil"></i></button></div>
+                    </li>
                     <li ng-if="selected.edit.data"><strong>Size:</strong> {{ selected.edit.data.size }}</li>
                     <li><strong>Modified By:</strong> {{ selected.modified_by.name }} ({{ selected.modified_by.username }})</li>
                     <li><strong>Modified At:</strong> {{ selected.modified_at | date:'medium' }}</li>
                     <li><input type="checkbox" ng-model="selected.edit.active"> Active</li>
-                    <div ui-ace="{
-                         mode: 'json',
-                         onLoad: aceLoaded
-                         }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
-                    <span ng-if="selected.error">{{ selected.error }}</span>
-                    <div class="details-footer">
-                        <button class="save" ng-disabled="selected.edit.data.body === selected.data.body && selected.edit.active === selected.active && selected.edit.immutable === selected.immutable" ng-click="save()">Save<span ng-if="selected.edit.data.body !== selected.data.body || selected.edit.active !== selected.active || selected.edit.immutable !== selected.immutable">*</span></button>
-                        <button ng-click="download('json')" ng-disabled="selected.data.size > 5000000"><i class="fa fa-download"></i> JSON</button>
-                        <button ng-click="download('octet-stream')"><i class="fa fa-download"></i> Binary</button>
-                    </div>
                 </ul>
+            </div>
+            <div ui-ace="{
+                 mode: 'json',
+                 onLoad: aceLoaded
+                 }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
+            <span class="details-error" ng-if="selected.error">{{ selected.error }}</span>
+            <div class="spacer"></div>
+            <div class="details-footer">
+                <button class="save" ng-disabled="selected.edit.data.body === selected.data.body && selected.edit.active === selected.active && selected.edit.immutable === selected.immutable" ng-click="save()">Save<span ng-if="selected.edit.data.body !== selected.data.body || selected.edit.active !== selected.active || selected.edit.immutable !== selected.immutable">*</span></button>
+                <button ng-click="download('json')" ng-disabled="selected.data.size > 5000000"><i class="fa fa-download"></i> JSON</button>
+                <button ng-click="download('octet-stream')"><i class="fa fa-download"></i> Binary</button>
             </div>
         </div>
 

@@ -15,11 +15,16 @@
         padding: 10px;
         width: 100%;
 
-        .title {
+        .title, .header-error {
             display: block;
             color: #7e8181;
             font-family: 'Gotham-Book', arial, sans-serif;
             line-height: 33px;
+        }
+
+        .header-error {
+            color: $error-red;
+            margin-right: 10px;
         }
 
         i {
@@ -48,8 +53,12 @@
                 width: calc(100vw - 700px);
             }
 
-            tip {
-                z-index: 9999;
+            .not-found {
+                color: #7e8181;
+                display: block;
+                font-family: 'Gotham-medium', arial, sans-serif;
+                font-size: 12px;
+                padding: 10px;
             }
 
             .records-level {
@@ -58,6 +67,10 @@
                 background: $offwhite;
                 border-right: 1px solid #cdcfcf;
                 width: 300px;
+
+                &.records-level-last {
+                    border-right: none;
+                }
 
                 .filter {
                     input {
@@ -71,9 +84,10 @@
                     @include flexbox;
                     @include flex-direction(column);
                     @include align-items(stretch);
+
                     // set the container height and make scrollable
                     // remove the fixed heights for header, filter box, and scrollbar
-                    height: calc(100vh - 104px);
+                    height: calc(100vh - 88px);
                     font-family: 'Gotham-Book', arial, sans-serif;
                     overflow-y: auto;
 
@@ -115,16 +129,30 @@
     }
 
     #records-visualizer-details {
+        @include flexbox;
+        @include flex-direction(column);
         @include flex(0 0 auto);
 
         background: $offwhite;
         border-left: 1px solid #cdcfcf;
-        padding: 20px;
+        padding: 15px;
         width: 300px;
 
         // reset the container width when meta panel expands
         &.expand {
             width: 500px;
+        }
+
+        .details-error {
+            background: white;
+            border: 1px solid $error-red;
+            border-radius: 4px;
+            color: $error-red;
+            display: block;
+            font-family: 'Gotham-Book', arial, sans-serif;
+            font-size: 12px;
+            margin-bottom: 15px;
+            padding: 5px;
         }
 
         h3 {
@@ -137,10 +165,18 @@
         li {
             font-family: 'Gotham-Light', arial, sans-serif;
             font-size: 12px;
-        }
 
-        li {
             margin-bottom: 15px;
+
+            button {
+                @include flex(1 0 auto);
+
+                background: $charcoal;
+                margin-top: 10px;
+                min-width: 25px !important;
+                padding: 5px 0;
+                width: 25px !important;
+            }
 
             &.record {
                 li {
@@ -167,8 +203,6 @@
         .details-footer {
             @include flexbox;
             @include justify-content(space-between);
-
-            padding: 10px 0;
 
             button {
                 @include flex(1 0 auto);
@@ -200,15 +234,25 @@
         min-width: 400px;
     }
 
+    .modal-header {
+        border-bottom: 1px solid #cdcfcf;
+    }
+
     .modal-footer {
         @include flexbox;
+
+        border-top: 1px solid #cdcfcf;
         button {
             background: $orange;
         }
     }
 
     .context-body {
-        padding: 0 15px;
+        padding: 15px;
         min-width: 400px;
+        label {
+            display: inline-block;
+            margin-bottom: 15px;
+        }
     }
 }
