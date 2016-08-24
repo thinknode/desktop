@@ -178,6 +178,7 @@
         $scope.levels = [];
         $scope.selected = null;
         $scope.focus = "hierarchy";
+        $scope.fullscreen = false;
 
         // --------------------------------------------------
         // Scope methods
@@ -190,7 +191,19 @@
         $scope.aceLoaded = function(_editor) {
             _editor.$blockScrolling = Infinity;
             _editor.setOptions({
-                maxLines: 500
+                maxLines: Infinity
+            });
+        };
+
+        /**
+         * @summary Called by the ace editor provider when the ace editor has been loaded.
+         *
+         * @param {object} _editor - The editor.
+         */
+        $scope.aceLoadedFullscreen = function(_editor) {
+            _editor.$blockScrolling = Infinity;
+            _editor.setOptions({
+                maxLines: Infinity
             });
         };
 
@@ -199,6 +212,82 @@
          */
         $scope.close = function() {
             $mdDialog.hide();
+        };
+
+        /**
+         * @summary Causes a record entry to be deleted.
+         *
+         * @param {string} id - The id of the RKS entry.
+         */
+        $scope.delete = function(id) {
+            $http({
+                method: "DELETE",
+                url: session.url("/rks/:id", {
+                    id: id
+                }, {
+                    context: $scope.context,
+                    recursive: $scope.deleteRecursive
+                }),
+                headers: {
+                    "Authorization": "Bearer " + session.token()
+                }
+            }).then(function() {
+                var selected = $scope.storage.get('selectedRecords')[$scope.context];
+                var level = selected.length - 2;
+                var entry, entries = $scope.levels[level].entries;
+                var test = selected[level];
+                for (var i = 0; i < entries.length; ++i) {
+                    if (entries[i].id === test) {
+                        entry = entries[i];
+                    }
+                }
+                return $scope.selectEntry(level, entry);
+            }).then(function() {
+                $mdDialog.hide();
+            }).catch(function(res) {
+                if (res.data && res.data.message) {
+                    $scope.selected.error = res.data.message;
+                } else {
+                    $scope.selected.error = "An unexpected error ocurred.";
+                }
+                $mdDialog.hide();
+            });
+        };
+
+        /**
+         * @summary Opens the modal for deleting a record entry.
+         *
+         * @param {object} e - The event object.
+         */
+        $scope.deleteModal = function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $scope.deleteConfirm = "";
+            $scope.deleteRecursive = false;
+            $mdDialog.show({
+                clickOutsideToClose: true,
+                scope: $scope,
+                targetEvent: e,
+                templateUrl: 'deleteEntry.tmpl.html',
+                preserveScope: true,
+                onShowing: function() {
+                    $scope.open = true;
+                },
+                onRemoving: function() {
+                    $scope.open = false;
+                }
+            });
+        };
+
+        /**
+         * @summary Toggles whether the fullscreen view is displayed.
+         *
+         * @param {object} e - The event object.
+         */
+        $scope.toggleFullscreen = function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $scope.fullscreen = !$scope.fullscreen;
         };
 
         /**

@@ -28,12 +28,19 @@
         }
 
         i {
-            border: 1px solid #cdcfcf;
-            border-radius: 4px;
+            // border: 1px solid #cdcfcf;
+            // border-radius: 4px;
+            cursor: pointer;
             font-size: 20px;
             line-height: 33px;
             padding: 0 10px;
         }
+    }
+
+    #records-visualizer-fullscreen {
+        @include flexbox;
+        @include flex-direction(column);
+        @include flex(0 0 auto);
     }
 
     #records-visualizer-main {
@@ -201,6 +208,16 @@
             }
         }
 
+        button {
+            @include flex(1 0 auto);
+
+            background: $charcoal;
+            margin-bottom: 10px;
+            min-width: 25px !important;
+            padding: 5px 5px;
+            // width: 25px !important;
+        }
+
         .long-id {
             font-size: 10px;
         }
@@ -230,6 +247,10 @@
                     background: $orange;
                 }
 
+                &.delete {
+                    background: $error-red
+                }
+
                 &:disabled {
                     cursor: not-allowed;
                     background: $grey;
@@ -256,6 +277,20 @@
         border-top: 1px solid #cdcfcf;
         button {
             background: $orange;
+
+            &:not(:first-child) {
+                margin-left: 10px;
+            }
+
+            &.close {
+                background: $charcoal;
+            }
+
+            &:disabled {
+                cursor: not-allowed;
+                background: $grey;
+                color: $tan;
+            }
         }
     }
 
