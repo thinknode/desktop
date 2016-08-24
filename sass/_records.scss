@@ -50,7 +50,7 @@
 
             // set the container width and make scrollable
             // remove the fixed widths for left nav and meta panel
-            width: calc(100vw - 500px);
+            width: calc(100vw - 650px);
             overflow-x: auto;
 
             // reduce the container width when meta panel is expanded
@@ -142,7 +142,7 @@
         background: $offwhite;
         border-left: 1px solid #cdcfcf;
         padding: 15px;
-        width: 300px;
+        width: 450px;
 
 
         .details-content {
@@ -213,7 +213,7 @@
             background: $charcoal;
             margin-bottom: 10px;
             min-width: 25px !important;
-            padding: 5px 5px;
+            padding: 5px;
             // width: 25px !important;
         }
 
@@ -236,6 +236,7 @@
                 @include flex(1 0 auto);
 
                 background: $charcoal;
+                padding: 12px;
                 width: 80px;
 
                 &:not(:first-child) {

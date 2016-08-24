@@ -52,11 +52,11 @@
                     <li><strong>Modified At:</strong> {{ selected.modified_at | date:'medium' }}</li>
                     <li><input type="checkbox" ng-model="selected.edit.active"> Active</li>
                 </ul>
-                <button ng-click="toggleFullscreen($event)" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"><i class="fa fa-expand"></i> Edit Fullscreen</button>
                 <div ui-ace="{
                      mode: 'json',
                      onLoad: aceLoaded
                      }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
+                <button ng-click="toggleFullscreen($event)" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"><i class="fa fa-expand"></i> Edit Fullscreen</button>
                 <span class="details-error" ng-if="selected.error">{{ selected.error }}</span>
             </div>
             <div class="details-footer" ng-if="selected">
