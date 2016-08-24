@@ -191,7 +191,7 @@
         $scope.aceLoaded = function(_editor) {
             _editor.$blockScrolling = Infinity;
             _editor.setOptions({
-                maxLines: Infinity
+                maxLines: 50
             });
         };
 

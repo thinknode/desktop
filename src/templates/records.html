@@ -82,14 +82,10 @@
     <!-- Fullscreen Main -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <div id="records-visualizer-fullscreen" class="fullscreen" ng-if="fullscreen">
-        <!-- <div id="records-visualizer-details" ng-click="focus='details';rescroll()" ng-class="{'expand': focus==='details'}"> -->
-            <!-- <div class="details-content" ng-if="selected"> -->
-                <div ui-ace="{
-                     mode: 'json',
-                     onLoad: aceLoadedFullscreen
-                     }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
-            <!-- </div> -->
-        <!-- </div> -->
+        <div ui-ace="{
+             mode: 'json',
+             onLoad: aceLoadedFullscreen
+             }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
     </div>
     <!-- -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
