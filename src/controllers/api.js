@@ -30,6 +30,7 @@
         // --------------------------------------------------
         // Local requires
 
+        var _ = require('lodash');
         var fs = require('fs');
         var msgpack = require('msgpack5')({
             forceFloat64: true
@@ -334,7 +335,8 @@
             }
             $scope.sendingRequest = true;
             for (var param in $scope.currentQuery) {
-                if ($scope.currentQuery[param] === "") {
+                if ($scope.currentQuery[param] === "" ||
+                    !_.find($scope.currentRoute.query, "field", param)) {
                     delete $scope.currentQuery[param];
                 }
             }
