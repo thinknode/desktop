@@ -11,11 +11,13 @@
         'base64',
         'ngAnimate',
         'ngRoute',
+        'ngMaterial',
         'toastr',
         'ui.ace',
         'ui.router',
         'ngNotificationsBar',
-        'angular-ladda'
+        'angular-ladda',
+        'duScroll'
     ]);
 
     // Configure module routes
@@ -81,6 +83,12 @@
                 url: '/api',
                 templateUrl: './src/templates/api.html',
                 controller: 'apiController'
+            });
+
+            $stateProvider.state('devkit.records', {
+                url: '/records',
+                templateUrl: './src/templates/records.html',
+                controller: 'recordsController'
             });
 
             // --------------------------------------------------

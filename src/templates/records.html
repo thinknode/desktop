@@ -1,0 +1,177 @@
+<div id="records-visualizer">
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Header -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <div id="records-visualizer-header" ng-if="!fullscreen">
+        <span class="title">Records Explorer<span ng-if="bucket"> - {{ bucket }}</span></span>
+        <div class="spacer"></div>
+        <span class="header-error" ng-if="error">{{ error }}</span>
+        <i id="records-settings-target" class="fa fa-cog" ng-click="modifySettings($event)"></i>
+    </div>
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Main -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <div id="records-visualizer-main" ng-if="!fullscreen">
+        
+        <div id="records-visualizer-hierarchy" ng-click="focus='hierarchy'" ng-class="{'collapse': focus==='details'}">
+
+            <div class="records-level" ng-class="{'records-level-last': level.entries.length === 0 && !level.next}" ng-repeat="level in levels">
+                <div class="filter" ng-if="level.entries.length > 0">
+                    <input type="text" placeholder="Filter Records" ng-model="level.filter">
+                </div>
+                <div class="records-container" ng-if="level.entries.length > 0">
+                    <span class="records-entry" ng-class="{'active': entry.selected}" ng-repeat="entry in level.entries | entry:level.filter" ng-click="selectEntry($parent.$index, entry)">{{ entry.name }}</span>
+                    <span class="records-loading" ng-if="level.next"><i class="fa fa-spinner fa-spin"></i></span>
+                </div>
+                <span class="not-found" ng-if="level.entries.length === 0 && !level.next">No child entries found</span>
+            </div>
+
+        </div>
+
+        <div id="records-visualizer-details" ng-click="focus='details';rescroll()" ng-class="{'expand': focus==='details'}">
+            <div class="details-content" ng-if="selected">
+                <h3>{{ selected.name }}</h3>
+                <ul>
+                    <li><strong>Id:</strong> <span class="long-id">{{ selected.id }}</span></li>
+                    <li class="record">
+                        <strong>Record:</strong>
+                        <ul>
+                            <li><strong>Account:</strong> {{ selected.record.account }}</li>
+                            <li><strong>App:</strong> {{ selected.record.app }}</li>
+                            <li><strong>Name:</strong> {{ selected.record.name }}</li>
+                        </ul>
+                    </li>
+                    <li>
+                        <strong>Reference:</strong> <span class="long-id">{{ selected.edit.immutable }}</span>
+                        <div><button ng-click="editReference($event)"><i class="fa fa-pencil"></i></button></div>
+                    </li>
+                    <li ng-if="selected.edit.data"><strong>Size:</strong> {{ selected.edit.data.size }}</li>
+                    <li><strong>Modified By:</strong> {{ selected.modified_by.name }} ({{ selected.modified_by.username }})</li>
+                    <li><strong>Modified At:</strong> {{ selected.modified_at | date:'medium' }}</li>
+                    <li><input type="checkbox" ng-model="selected.edit.active"> Active</li>
+                </ul>
+                <button ng-click="toggleFullscreen($event)" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"><i class="fa fa-expand"></i> Edit Fullscreen</button>
+                <div ui-ace="{
+                     mode: 'json',
+                     onLoad: aceLoaded
+                     }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
+                <span class="details-error" ng-if="selected.error">{{ selected.error }}</span>
+            </div>
+            <div class="details-footer" ng-if="selected">
+                <button class="save" ng-disabled="selected.edit.data.body === selected.data.body && selected.edit.active === selected.active && selected.edit.immutable === selected.immutable" ng-click="save()">Save<span ng-if="selected.edit.data.body !== selected.data.body || selected.edit.active !== selected.active || selected.edit.immutable !== selected.immutable">*</span></button>
+                <button ng-click="download('json')" ng-disabled="selected.data.size > 5000000"><i class="fa fa-download"></i> JSON</button>
+                <button ng-click="download('octet-stream')"><i class="fa fa-download"></i> Binary</button>
+                <button class="delete" ng-click="deleteModal($event)"><i class="fa fa-trash"></i></button>
+            </div>
+        </div>
+
+    </div>
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Fullscreen Header -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <div id="records-visualizer-header" class="fullscreen" ng-if="fullscreen">
+        <span class="title">{{ selected.name }} - Entry Details</span>
+        <div class="spacer"></div>
+        <i id="records-settings-target" class="fa fa-times" ng-click="toggleFullscreen($event)"></i>
+    </div>
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Fullscreen Main -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <div id="records-visualizer-fullscreen" class="fullscreen" ng-if="fullscreen">
+        <div ui-ace="{
+             mode: 'json',
+             onLoad: aceLoadedFullscreen
+             }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
+    </div>
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Records Settings modal -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <script type="text/ng-template" id="recordsSettings.tmpl.html">
+        <div class="modal-content records-modal">
+            <div class="modal-header">
+                Settings
+            </div>
+            <div class="modal-body context-body">
+                <form name="settingsForm">
+                    <div id="form-context" class="form-group has-feedback" ng-class="{'has-error': hasError(settingsForm, 'context')}">
+                        <div>
+                            <label>Context</label>
+                            <input name="context" type="text" class="form-control" ng-model="context" ng-change="refresh(true)" placeholder="Add Context" ng-maxlength="32" required>
+                        </div>
+                    </div>
+                    <div id="form-context" class="form-group has-feedback" ng-class="{'has-error': hasError(settingsForm, 'context')}">
+                        <div>
+                            <input id="context" name="context" type="checkbox" class="form-control" ng-model="inactive" ng-change="refresh(true)">
+                            <label>Include Inactive</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="spacer"></div>
+                <button type="button" class="close" ng-click="close()">Close</button>
+            </div>
+        </div>
+    </script>
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Record Entry Reference modal -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <script type="text/ng-template" id="entryReference.tmpl.html">
+        <div class="modal-content records-modal">
+            <div class="modal-header">
+                Reference
+            </div>
+            <div class="modal-body context-body">
+                <form name="referenceForm">
+                    <div id="form-context" class="form-group">
+                        <div>
+                            <label>Reference</label>
+                            <input name="reference" type="text" class="form-control" ng-model="selected.edit.immutable" placeholder="Edit Reference Id" ng-maxlength="32" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="spacer"></div>
+                <button type="button" class="close" ng-click="close()">Close</button>
+            </div>
+        </div>
+    </script>
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Delete Entry modal -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <script type="text/ng-template" id="deleteEntry.tmpl.html">
+        <div class="modal-content records-modal">
+            <div class="modal-header">
+                Reference
+            </div>
+            <div class="modal-body context-body">
+                <form name="deleteEntryForm">
+                    <div id="form-context" class="form-group">
+                        <div>
+                            <label>Type DELETE to confirm record entry deletion.</label>
+                            <input name="confirmation" type="text" class="form-control" ng-model="deleteConfirm" placeholder="Type 'DELETE'" required>
+                        </div>
+                    </div>
+                    <div id="form-context" class="form-group">
+                        <div>
+                            <input name="recursive" type="checkbox" class="form-control" ng-model="deleteRecursive"> Recursive
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="spacer"></div>
+                <button type="button" class="close" ng-click="close()" >Cancel</button>
+                <button type="button" class="delete" ng-click="delete(selected.id)" ng-disabled="deleteConfirm!=='DELETE'">Confirm</button>
+            </div>
+        </div>
+    </script>
+</div>
