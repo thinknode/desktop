@@ -49,6 +49,52 @@
             return entries;
         }
 
+        function getObject(id) {
+            return resolveImmutable(id).then(function(obj) {
+                return resolveData(obj.immutable).then(function(data) {
+                    data.type = obj.type;
+                    return data;
+                });
+            });
+        }
+
+        function inspectContext() {
+            return $http({
+                method: "GET",
+                url: session.url("/iam/contexts/:id", {
+                    "id": $scope.context
+                }),
+                headers: {
+                    "Authorization": "Bearer " + session.token(),
+                    "Accept": "application/json"
+                }
+            }).then(function(res) {
+                return res.data;
+            });
+        }
+
+        function queryEntries(parent, start) {
+            var query = {
+                context: $scope.context,
+                inactive: $scope.inactive,
+                depth: 0
+            };
+            if (parent) {
+                query.parent = parent;
+                query.depth = 1;
+            }
+            if (start) {
+                query.start = start;
+            }
+            return $http({
+                method: "GET",
+                url: session.url("/rks", null, query),
+                headers: {
+                    "Authorization": "Bearer " + session.token()
+                }
+            });
+        }
+
         function resolveData(immutable) {
             var key = $scope.context + "-" + immutable;
             if (typeof memcache[key] !== "undefined") {
@@ -139,37 +185,6 @@
             }
         }
 
-        function getObject(id) {
-            return resolveImmutable(id).then(function(obj) {
-                return resolveData(obj.immutable).then(function(data) {
-                    data.type = obj.type;
-                    return data;
-                });
-            });
-        }
-
-        function queryEntries(parent, start) {
-            var query = {
-                context: $scope.context,
-                inactive: $scope.inactive,
-                depth: 0
-            };
-            if (parent) {
-                query.parent = parent;
-                query.depth = 1;
-            }
-            if (start) {
-                query.start = start;
-            }
-            return $http({
-                method: "GET",
-                url: session.url("/rks", null, query),
-                headers: {
-                    "Authorization": "Bearer " + session.token()
-                }
-            });
-        }
-
         // --------------------------------------------------
         // Scope variables
 
@@ -179,6 +194,7 @@
         $scope.selected = null;
         $scope.focus = "hierarchy";
         $scope.fullscreen = false;
+        $scope.bucket = null;
 
         // --------------------------------------------------
         // Scope methods
@@ -280,17 +296,6 @@
         };
 
         /**
-         * @summary Toggles whether the fullscreen view is displayed.
-         *
-         * @param {object} e - The event object.
-         */
-        $scope.toggleFullscreen = function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            $scope.fullscreen = !$scope.fullscreen;
-        };
-
-        /**
          * @summary Refreshes the state of the visualizer hierarchy.
          * @description
          * This should be used
@@ -319,7 +324,12 @@
                 "entries": [],
                 "filter": ""
             };
-            return (refreshPromise = queryEntries().then(function(res) {
+            return (refreshPromise = inspectContext().then(function(info) {
+                if (info.bucket !== "#ref") {
+                    $scope.bucket = info.bucket;
+                }
+                return queryEntries();
+            }).then(function(res) {
                 // Deserialize dates
                 var data = deserialize(res.data);
                 // Add initial level
@@ -363,6 +373,57 @@
         };
 
         /**
+         * @summary Saves the data to a file.
+         *
+         * @param {string} type - The type of the data (either "json" or "octet-stream").
+         */
+        $scope.download = function(type) {
+            dialog.showSaveDialog(function(filename) {
+                if (typeof filename === "undefined") {
+                    return;
+                }
+                return resolveImmutable($scope.selected.immutable).then(function(immutable) {
+                    request.get({
+                        uri: session.url("/iss/immutable/:id", {
+                            id: immutable
+                        }, {
+                            context: $scope.context
+                        }),
+                        headers: {
+                            "Authorization": "Bearer " + session.token(),
+                            "Accept": "application/" + type
+                        }
+                    }).on("error", function(e) {
+                        $scope.error = e.message || "Unable to download to file";
+                    }).pipe(fs.createWriteStream(filename));
+                });
+            });
+        };
+
+        /**
+         * @summary Opens the modal to modify the Visualizer settings.
+         *
+         * @param {object} e - The event object.
+         */
+        $scope.editReference = function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $mdDialog.show({
+                clickOutsideToClose: true,
+                scope: $scope,
+                targetEvent: e,
+                templateUrl: 'entryReference.tmpl.html',
+                preserveScope: true,
+                onShowing: function() {
+                    $scope.open = true;
+                },
+                onRemoving: function() {
+                    $scope.open = false;
+                }
+            });
+        };
+
+        /**
          * @summary Opens the modal to modify the Visualizer settings.
          *
          * @param {object} e - The event object.
@@ -388,26 +449,34 @@
         };
 
         /**
-         * @summary Opens the modal to modify the Visualizer settings.
+         * @summary Queries for the next page of entries.
          *
-         * @param {object} e - The event object.
+         * @param {number} index - The index representing the selected level in which to load more
+         *   entries.
          */
-        $scope.editReference = function(e) {
-            e.stopPropagation();
-            e.preventDefault();
-            $mdDialog.show({
-                clickOutsideToClose: true,
-                scope: $scope,
-                targetEvent: e,
-                templateUrl: 'entryReference.tmpl.html',
-                preserveScope: true,
-                onShowing: function() {
-                    $scope.open = true;
-                },
-                onRemoving: function() {
-                    $scope.open = false;
+        $scope.nextPage = function(index) {
+            var level = $scope.levels[index];
+            return queryEntries(level.parent, level.next).then(function(res) {
+                // Deserialize dates
+                var data = deserialize(res.data);
+                // Add entries to level and set new next value
+                level.entries = level.entries.concat(data);
+                level.next = res.headers("Thinknode-Next");
+                if (level.next) {
+                    return $scope.nextPage(index);
                 }
             });
+        };
+
+        /**
+         * @summary Scrolls the heirarchy window to the last level.
+         */
+        $scope.rescroll = function() {
+            $timeout(function() {
+                var container = angular.element("#records-visualizer-hierarchy");
+                var elements = angular.element(".records-level");
+                container.scrollTo(elements.length * elements.width());
+            }, 200);
         };
 
         /**
@@ -469,26 +538,6 @@
                     $scope.selected.error = res.data.message;
                 } else {
                     $scope.selected.error = "An unexpected error ocurred.";
-                }
-            });
-        };
-
-        /**
-         * @summary Queries for the next page of entries.
-         *
-         * @param {number} index - The index representing the selected level in which to load more
-         *   entries.
-         */
-        $scope.nextPage = function(index) {
-            var level = $scope.levels[index];
-            return queryEntries(level.parent, level.next).then(function(res) {
-                // Deserialize dates
-                var data = deserialize(res.data);
-                // Add entries to level and set new next value
-                level.entries = level.entries.concat(data);
-                level.next = res.headers("Thinknode-Next");
-                if (level.next) {
-                    return $scope.nextPage(index);
                 }
             });
         };
@@ -579,39 +628,14 @@
         };
 
         /**
-         * @summary Saves the data to a file.
+         * @summary Toggles whether the fullscreen view is displayed.
          *
-         * @param {string} type - The type of the data (either "json" or "octet-stream").
+         * @param {object} e - The event object.
          */
-        $scope.download = function(type) {
-            dialog.showSaveDialog(function(filename) {
-                if (typeof filename === "undefined") {
-                    return;
-                }
-                return resolveImmutable($scope.selected.immutable).then(function(immutable) {
-                    request.get({
-                        uri: session.url("/iss/immutable/:id", {
-                            id: immutable
-                        }, {
-                            context: $scope.context
-                        }),
-                        headers: {
-                            "Authorization": "Bearer " + session.token(),
-                            "Accept": "application/" + type
-                        }
-                    }).on("error", function(e) {
-                        $scope.error = e.message || "Unable to download to file";
-                    }).pipe(fs.createWriteStream(filename));
-                });
-            });
-        };
-
-        $scope.rescroll = function() {
-            $timeout(function() {
-                var container = angular.element("#records-visualizer-hierarchy");
-                var elements = angular.element(".records-level");
-                container.scrollTo(elements.length * elements.width());
-            }, 200);
+        $scope.toggleFullscreen = function(e) {
+            e.stopPropagation();
+            e.preventDefault();
+            $scope.fullscreen = !$scope.fullscreen;
         };
 
         // --------------------------------------------------

@@ -4,7 +4,7 @@
     <!-- Header -->
     <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
     <div id="records-visualizer-header" ng-if="!fullscreen">
-        <span class="title">Records Explorer</span>
+        <span class="title">Records Explorer<span ng-if="bucket"> - {{ bucket }}</span></span>
         <div class="spacer"></div>
         <span class="header-error" ng-if="error">{{ error }}</span>
         <i id="records-settings-target" class="fa fa-cog" ng-click="modifySettings($event)"></i>
@@ -52,11 +52,11 @@
                     <li><strong>Modified At:</strong> {{ selected.modified_at | date:'medium' }}</li>
                     <li><input type="checkbox" ng-model="selected.edit.active"> Active</li>
                 </ul>
+                <button ng-click="toggleFullscreen($event)" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"><i class="fa fa-expand"></i> Edit Fullscreen</button>
                 <div ui-ace="{
                      mode: 'json',
                      onLoad: aceLoaded
                      }" ng-model="selected.edit.data.body" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"></div>
-                <button ng-click="toggleFullscreen($event)" ng-if="selected.edit.data && selected.edit.data.size <= 5000000"><i class="fa fa-expand"></i> Edit Fullscreen</button>
                 <span class="details-error" ng-if="selected.error">{{ selected.error }}</span>
             </div>
             <div class="details-footer" ng-if="selected">
@@ -102,9 +102,6 @@
                         <div>
                             <label>Context</label>
                             <input name="context" type="text" class="form-control" ng-model="context" ng-change="refresh(true)" placeholder="Add Context" ng-maxlength="32" required>
-                            <!-- <span id="error-context-required" ng-show="hasError(settingsForm, 'context', 'required')" class="help-block ng-hide">Please enter a context.</span>
-                            <span id="error-structure-name-maxlength" ng-show="hasError(settingsForm, 'name', 'maxlength')" class="help-block ng-hide">Context names must not exceed 32 characters.</span>
-                            <span id="error-context-glyphicon" class="glyphicon glyphicon-remove form-control-feedback text-danger" ng-show="hasError(settingsForm, 'context')" aria-hidden="true"></span> -->
                         </div>
                     </div>
                     <div id="form-context" class="form-group has-feedback" ng-class="{'has-error': hasError(settingsForm, 'context')}">
