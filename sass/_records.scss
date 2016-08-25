@@ -10,7 +10,7 @@
         @include flex(0 0 auto);
 
         background: white;
-        border-bottom: 1px solid #cdcfcf;
+        border-bottom: 1px solid $border-silver;
         height: 55px;
         padding: 10px;
         width: 100%;
@@ -28,8 +28,6 @@
         }
 
         i {
-            // border: 1px solid #cdcfcf;
-            // border-radius: 4px;
             cursor: pointer;
             font-size: 20px;
             line-height: 33px;
@@ -71,7 +69,7 @@
                 @include flex(0 0 auto);
 
                 background: $offwhite;
-                border-right: 1px solid #cdcfcf;
+                border-right: 1px solid $border-silver;
                 width: 300px;
 
                 &.records-level-last {
@@ -81,7 +79,7 @@
                 .filter {
                     input {
                         border: 0;
-                        border-bottom: 1px solid #cdcfcf;
+                        border-bottom: 1px solid $border-silver;
                         border-radius: 0;
                     }
                 }
@@ -100,7 +98,7 @@
                     .records-entry {
                         @include flex(0 0 auto);
 
-                        border-bottom: 1px solid #cdcfcf;
+                        border-bottom: 1px solid $border-silver;
                         display: block;
                         font-size: .8rem;
                         padding: 8px;
@@ -140,7 +138,7 @@
         @include flex(0 0 auto);
 
         background: $offwhite;
-        border-left: 1px solid #cdcfcf;
+        border-left: 1px solid $border-silver;
         padding: 15px;
         width: 450px;
 
@@ -195,7 +193,7 @@
 
             &.record {
                 li {
-                    border-left: 4px solid #cdcfcf;
+                    border-left: 4px solid $border-silver;
                     font-size: 11px;
                     padding-left: 5px;
                 }
@@ -229,7 +227,7 @@
             @include flexbox;
             @include justify-content(space-between);
 
-            border-top: 1px solid #cdcfcf;
+            border-top: 1px solid $border-silver;
             padding-top: 15px;
 
             button {
@@ -268,13 +266,13 @@
     }
 
     .modal-header {
-        border-bottom: 1px solid #cdcfcf;
+        border-bottom: 1px solid $border-silver;
     }
 
     .modal-footer {
         @include flexbox;
 
-        border-top: 1px solid #cdcfcf;
+        border-top: 1px solid $border-silver;
         button {
             background: $orange;
 

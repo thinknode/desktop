@@ -1,7 +1,7 @@
 /*
- * Api Controller
+ * Records Controller
  *
- * Copyright (c) 2015 Thinknode Labs, LLC. All rights reserved.
+ * Copyright (c) 2016 Thinknode Labs, LLC. All rights reserved.
  */
 
 (function() {
@@ -42,13 +42,13 @@
         // --------------------------------------------------
         // Local functions
 
-        function deserialize(entries) {
-            for (var i = 0; i < entries.length; ++i) {
-                entries[i].modified_at = new Date(entries[i].modified_at);
-            }
-            return entries;
-        }
-
+        /** 
+         * @summary Given a reference id, retrieves the object.
+         *
+         * @param {string} id - The reference id.
+         * @returns {object} An object containing properties for the size, body, and type of the
+         *   object.
+         */
         function getObject(id) {
             return resolveImmutable(id).then(function(obj) {
                 return resolveData(obj.immutable).then(function(data) {
@@ -58,6 +58,11 @@
             });
         }
 
+        /** 
+         * @summary Inspects the current context.
+         *
+         * @returns {object} Information about the context including the bucket and contents.
+         */
         function inspectContext() {
             return $http({
                 method: "GET",
@@ -73,6 +78,14 @@
             });
         }
 
+        /** 
+         * @summary Queries for record entries for the current context.
+         *
+         * @param {string} [parent] - The id of the parent record entry.
+         * @param {string} [start] - If provided, retrieves the next page of entries starting at the
+         *   provided id.
+         * @returns {object} A list of record entries.
+         */
         function queryEntries(parent, start) {
             var query = {
                 context: $scope.context,
@@ -95,6 +108,13 @@
             });
         }
 
+        /** 
+         * @summary Given an immutable id, retrieves the data.
+         *
+         * @param {string} immutable - The immutable id.
+         * @returns {object} An object containing properties for the size and (if below 5MB) the
+         *   data itself.
+         */
         function resolveData(immutable) {
             var key = $scope.context + "-" + immutable;
             if (typeof memcache[key] !== "undefined") {
@@ -142,6 +162,13 @@
             }
         }
 
+        /** 
+         * @summary Given a reference id, retrieves the .
+         *
+         * @param {string} id - The reference id.
+         * @returns {object} An object containing properties for the immutable id and the type of
+         *   the data.
+         */
         function resolveImmutable(id) {
             var key = $scope.context + "-" + id;
             if (typeof memcache[key] !== "undefined") {
@@ -250,14 +277,18 @@
             }).then(function() {
                 var selected = $scope.storage.get('selectedRecords')[$scope.context];
                 var level = selected.length - 2;
-                var entry, entries = $scope.levels[level].entries;
-                var test = selected[level];
-                for (var i = 0; i < entries.length; ++i) {
-                    if (entries[i].id === test) {
-                        entry = entries[i];
+                if (level < 0) {
+                    return $scope.refresh(true);
+                } else {
+                    var entry, entries = $scope.levels[level].entries;
+                    var test = selected[level];
+                    for (var i = 0; i < entries.length; ++i) {
+                        if (entries[i].id === test) {
+                            entry = entries[i];
+                        }
                     }
+                    return $scope.selectEntry(level, entry);
                 }
-                return $scope.selectEntry(level, entry);
             }).then(function() {
                 $mdDialog.hide();
             }).catch(function(res) {
@@ -293,83 +324,6 @@
                     $scope.open = false;
                 }
             });
-        };
-
-        /**
-         * @summary Refreshes the state of the visualizer hierarchy.
-         * @description
-         * This should be used
-         *
-         * @param {boolean} force - Indicates whether the refresh operation should be forced (in the
-         *   case that the user has entered in a new context, for instance)
-         * @returns {Promise} An angular promise that resolves when the root-level entries have been
-         *   retrieved. It will also resolve if the context is invalid and cannot be used in the
-         *   query.
-         */
-        $scope.refresh = function(force, selected) {
-            if (refreshPromise && !force) {
-                return refreshPromise;
-            }
-            $scope.selected = null;
-            $scope.focus = "hierarchy";
-            $scope.levels = [];
-            $scope.error = "";
-            if (!$scope.context || !/^[a-zA-Z0-9]{32}$/.test($scope.context)) {
-                $scope.error = "Invalid context provided.";
-                return (refreshPromise = $q.resolve());
-            }
-            var level = {
-                "parent": null,
-                "next": true,
-                "entries": [],
-                "filter": ""
-            };
-            return (refreshPromise = inspectContext().then(function(info) {
-                if (info.bucket !== "#ref") {
-                    $scope.bucket = info.bucket;
-                }
-                return queryEntries();
-            }).then(function(res) {
-                // Deserialize dates
-                var data = deserialize(res.data);
-                // Add initial level
-                $scope.levels = [];
-                level.next = res.headers('Thinknode-Next');
-                level.entries = data;
-                $scope.levels.push(level);
-                if (level.next) {
-                    return $scope.nextPage($scope.levels.length - 1);
-                }
-            }).then(function() {
-                var map;
-                if (selected) {
-                    var found, remembered = selected.shift();
-                    for (var i = 0; i < level.entries.length; ++i) {
-                        if (level.entries[i].id === remembered) {
-                            found = $scope.selected = level.entries[i];
-                            level.entries[i].selected = true;
-                        } else {
-                            level.entries[i].selected = false;
-                        }
-                    }
-                    if (found) {
-                        return $scope.selectEntry(0, found, selected);
-                    }
-                }
-                // Otherwise, reset the selected records.
-                map = $scope.storage.get('selectedRecords') || {};
-                map[$scope.context] = [];
-                $scope.storage.set('selectedRecords', map);
-            }).catch(function(res) {
-                $scope.selected = null;
-                $scope.focus = "hierarchy";
-                $scope.levels = [];
-                if (res.data && res.data.message) {
-                    $scope.error = res.data.message;
-                } else {
-                    $scope.error = "An unexpected error ocurred.";
-                }
-            }));
         };
 
         /**
@@ -457,15 +411,89 @@
         $scope.nextPage = function(index) {
             var level = $scope.levels[index];
             return queryEntries(level.parent, level.next).then(function(res) {
-                // Deserialize dates
-                var data = deserialize(res.data);
                 // Add entries to level and set new next value
-                level.entries = level.entries.concat(data);
+                level.entries = level.entries.concat(res.data);
                 level.next = res.headers("Thinknode-Next");
                 if (level.next) {
                     return $scope.nextPage(index);
                 }
             });
+        };
+
+        /**
+         * @summary Refreshes the state of the visualizer hierarchy.
+         * @description
+         * This should be used
+         *
+         * @param {boolean} force - Indicates whether the refresh operation should be forced (in the
+         *   case that the user has entered in a new context, for instance).
+         * @param {string[]} selected - The array of the selected entry ids.
+         * @returns {Promise} An angular promise that resolves when the root-level entries have been
+         *   retrieved. It will also resolve if the context is invalid and cannot be used in the
+         *   query.
+         */
+        $scope.refresh = function(force, selected) {
+            if (refreshPromise && !force) {
+                return refreshPromise;
+            }
+            $scope.selected = null;
+            $scope.focus = "hierarchy";
+            $scope.levels = [];
+            $scope.error = "";
+            if (!$scope.context || !/^[a-zA-Z0-9]{32}$/.test($scope.context)) {
+                $scope.error = "Invalid context provided.";
+                return (refreshPromise = $q.resolve());
+            }
+            var level = {
+                "parent": null,
+                "next": true,
+                "entries": [],
+                "filter": ""
+            };
+            return (refreshPromise = inspectContext().then(function(info) {
+                if (info.bucket !== "#ref") {
+                    $scope.bucket = info.bucket;
+                }
+                return queryEntries();
+            }).then(function(res) {
+                // Add initial level
+                $scope.levels = [];
+                level.next = res.headers('Thinknode-Next');
+                level.entries = res.data;
+                $scope.levels.push(level);
+                if (level.next) {
+                    return $scope.nextPage($scope.levels.length - 1);
+                }
+            }).then(function() {
+                var map;
+                if (selected) {
+                    var found, remembered = selected.shift();
+                    for (var i = 0; i < level.entries.length; ++i) {
+                        if (level.entries[i].id === remembered) {
+                            found = $scope.selected = level.entries[i];
+                            level.entries[i].selected = true;
+                        } else {
+                            level.entries[i].selected = false;
+                        }
+                    }
+                    if (found) {
+                        return $scope.selectEntry(0, found, selected);
+                    }
+                }
+                // Otherwise, reset the selected records.
+                map = $scope.storage.get('selectedRecords') || {};
+                map[$scope.context] = [];
+                $scope.storage.set('selectedRecords', map);
+            }).catch(function(res) {
+                $scope.selected = null;
+                $scope.focus = "hierarchy";
+                $scope.levels = [];
+                if (res.data && res.data.message) {
+                    $scope.error = res.data.message;
+                } else {
+                    $scope.error = "An unexpected error occurred.";
+                }
+            }));
         };
 
         /**
@@ -525,19 +553,23 @@
             }).then(function(res) {
                 var selected = $scope.storage.get('selectedRecords')[$scope.context];
                 var level = selected.length - 2;
-                var entry, entries = $scope.levels[level].entries;
-                var test = selected[level];
-                for (var i = 0; i < entries.length; ++i) {
-                    if (entries[i].id === test) {
-                        entry = entries[i];
+                if (level < 0) {
+                    return $scope.refresh(true, selected);
+                } else {
+                    var entry, entries = $scope.levels[level].entries;
+                    var test = selected[level];
+                    for (var i = 0; i < entries.length; ++i) {
+                        if (entries[i].id === test) {
+                            entry = entries[i];
+                        }
                     }
+                    return $scope.selectEntry(level, entry, selected.slice(selected.length - 1));
                 }
-                return $scope.selectEntry(level, entry, selected.slice(selected.length - 1));
             }).catch(function(res) {
                 if (res.data && res.data.message) {
                     $scope.selected.error = res.data.message;
                 } else {
-                    $scope.selected.error = "An unexpected error ocurred.";
+                    $scope.selected.error = "An unexpected error occurred.";
                 }
             });
         };
@@ -552,6 +584,7 @@
          * @param {number} level - The index representing the index of the level in which the
          *   selected entry belongs.
          * @param {object} entry - The selected entry.
+         * @param {string[]} list - A list of additional entry ids to select.
          */
         $scope.selectEntry = function(level, entry, list) {
             $scope.levels = $scope.levels.slice(0, level + 1);
@@ -577,11 +610,9 @@
                 $scope.selected.edit.data = _.cloneDeep(obj);
                 return queryEntries($scope.selected.id);
             }).then(function(res) {
-                // Deserialize dates
-                var data = deserialize(res.data);
                 // Set level properties
                 new_level.next = res.headers("Thinknode-Next");
-                new_level.entries = data;
+                new_level.entries = res.data;
                 // Scroll to new level
                 var container = angular.element("#records-visualizer-hierarchy");
                 var element = angular.element(".records-level:last");
@@ -622,7 +653,7 @@
                 } else if (res.data && res.data.message) {
                     $scope.selected.error = res.data.message;
                 } else {
-                    $scope.selected.error = "An unexpected error ocurred.";
+                    $scope.selected.error = "An unexpected error occurred.";
                 }
             });
         };
@@ -667,12 +698,12 @@
                 if (part.indexOf(":") > -1) {
                     subparts = part.split(":");
                     if (fields.indexOf(subparts[0]) > -1) {
-                        obj[subparts[0]] = subparts[1];
+                        obj[subparts[0]] = subparts[1].toLowerCase();
                     } else {
-                        strings.push(part);
+                        strings.push(part.toLowerCase());
                     }
                 } else {
-                    strings.push(part);
+                    strings.push(part.toLowerCase());
                 }
             }
             // Use filter objects to construct final collection
@@ -695,20 +726,20 @@
                     failed = true;
                 }
                 // Check name field
-                if (obj.name && item.name.indexOf(obj.name) < 0) {
+                if (obj.name && item.name.toLowerCase().indexOf(obj.name) < 0) {
                     failed = true;
                 }
                 // Check record field
                 if (obj.record) {
                     temp = item.record.account + "/" + item.record.app + "/" + item.record.name;
-                    if (temp.indexOf(obj.record) < 0) {
+                    if (temp.toLowerCase().indexOf(obj.record) < 0) {
                         failed = true;
                     }
                 }
                 // Check name against strings
                 found = false;
                 for (j = 0; j < strings.length; ++j) {
-                    if (item.name.indexOf(strings[j]) > -1) {
+                    if (item.name.toLowerCase().indexOf(strings[j]) > -1) {
                         found = true;
                         break;
                     }

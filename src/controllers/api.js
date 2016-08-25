@@ -11,10 +11,10 @@
     // Controller
 
     function apiController($scope, session, $http, $docs, $sce, $document, $location, $anchorScroll, $rootScope) {
-        
+
         // --------------------------------------------------
         // Local variables
-        
+
         var lastService;
         var lastModule;
 
@@ -24,7 +24,7 @@
 
         var buf;
         var glowTimeout = null;
-        
+
         var deregisterInit;
 
         // --------------------------------------------------
@@ -224,7 +224,7 @@
             $scope.showRoutes = !$scope.showRoutes;
             event.stopPropagation();
             var apiContent = angular.element($document[0].querySelectorAll('#api-content'));
-            if($scope.showRoutes) {
+            if ($scope.showRoutes) {
                 // Remove the handlers left over by user clicking on left side menu
                 apiContent.unbind('click', handler);
                 apiContent.bind('click', handler);
@@ -233,12 +233,12 @@
                 apiContent.unbind('click', handler);
             }
         };
-        
-        $scope.clickRequestHeaders = function(event){
+
+        $scope.clickRequestHeaders = function(event) {
             $scope.showRequestHeaders = !$scope.showRequestHeaders;
             event.stopPropagation();
         };
-        $scope.clickResponseHeaders = function(event){
+        $scope.clickResponseHeaders = function(event) {
             $scope.showResponseHeaders = !$scope.showResponseHeaders;
             event.stopPropagation();
         };
@@ -345,6 +345,9 @@
                     "Authorization": "Bearer " + session.token()
                 }
             };
+            if ($scope.currentRoute.url === "/calc/:id/logs/:type") {
+                opts.transformResponse = [];
+            }
             if ($scope.currentRoute.hasBody) {
                 if (buf) {
                     opts.headers['Content-Type'] = 'application/octet-stream';
@@ -355,7 +358,7 @@
                     opts.data = $scope.current.body;
                 }
             }
-            
+
             // Issue http request
             $http(opts).then(function(res) {
                 $scope.currentResult = res.data;
