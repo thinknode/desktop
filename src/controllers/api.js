@@ -85,7 +85,9 @@
                     $scope.currentModule = obj;
 
                     // Set the last route used
-                    if (routeMap.hasOwnProperty(lastModule)) {
+                    if (routeMap.hasOwnProperty(lastModule) &&
+                        typeof routeMap[lastModule].lastResourceIndex !== "undefined" &&
+                        typeof routeMap[lastModule].lastRouteIndex !== "undefined") {
                         setRoute(routeMap[lastModule].lastResourceIndex, routeMap[lastModule].lastRouteIndex);
                     } else {
                         setRoute(0, 0);
@@ -294,7 +296,9 @@
                     $scope.storage.set('routeMap', routeMap);
                 }
 
-                if (routeMap.hasOwnProperty(module)) {
+                if (routeMap.hasOwnProperty(module) &&
+                    typeof routeMap[module].lastResourceIndex !== "undefined" &&
+                    typeof routeMap[module].lastRouteIndex !== "undefined") {
                     setRoute(routeMap[module].lastResourceIndex, routeMap[module].lastRouteIndex);
                 } else {
                     setRoute(0, 0);
@@ -309,9 +313,9 @@
          * map.
          * @param {event} $event - The event that triggered the handler.
          * @param {int} resourceIndex - The current resource's index (ex. App Branches, App Versions are resources).
-         * @param {int} routeIndex - The current route's index.
+         * @param {int} route - The selected route.
          */
-        $scope.selectRoute = function($event, resourceIndex, routeIndex) {
+        $scope.selectRoute = function($event, resourceIndex, route) {
             var apiContent = angular.element($document[0].querySelectorAll('#api-content'));
             apiContent.unbind('click', handler);
             $event.stopPropagation();
@@ -320,7 +324,10 @@
                 currentQuery: $scope.currentQuery
             };
             $scope.storage.set('routeMap', routeMap);
-            setRoute(resourceIndex, routeIndex);
+            var idx = _.findIndex($scope.currentModule.resources[resourceIndex].routes, function(item) {
+                return item.type === route.type && item.url === route.url;
+            });
+            setRoute(resourceIndex, idx);
         };
 
         /**
@@ -411,5 +418,13 @@
         '$anchorScroll',
         '$rootScope',
         apiController
-    ]);
+    ]).filter('routeFilter', function() {
+        // If it becomes necessary to filter out entire services or modules, use optional argument
+        // to specify the type (service, module, route).
+        return function(input) {
+            return input.filter(function(item) {
+                return item.url !== "/cas/login";
+            });
+        };
+    });
 })();

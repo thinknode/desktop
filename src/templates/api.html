@@ -22,7 +22,7 @@
             <div id="api-route-dropdown" ng-show="showRoutes">
                 <div class="dropdown-resource" ng-repeat="resource in currentModule.resources">
                     <span>{{resource.name}}</span>
-                    <div class="dropdown-route" ng-repeat="route in resource.routes" ng-click="selectRoute($event, $parent.$index, $index)">
+                    <div class="dropdown-route" ng-repeat="route in resource.routes | routeFilter" ng-click="selectRoute($event, $parent.$index, route)">
                         <span class="type">{{route.type}}</span>
                         <span class="url">{{route.url}}</span>
                         <span class="title">({{route.title}})</span>
@@ -82,7 +82,7 @@
                  }" ng-model="current.body"></div>
             <div ng-if="hasCurrentBuffer">Buffer currently selected</div>
         </div>
-        <div id="api-action" ng-if="currentRoute">
+        <div id="api-action" ng-if="currentRoute" ng-class="{'no-pad-top': currentResultString}">
             <div class="spacer"></div>
             <button class="send" ng-click="send()" ladda="sendingRequest" ng-class="currentRoute.type">{{currentRoute.type}}</button>
         </div>
