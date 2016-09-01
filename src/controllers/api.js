@@ -411,5 +411,13 @@
         '$anchorScroll',
         '$rootScope',
         apiController
-    ]);
+    ]).filter('routeFilter', function() {
+        // If it becomes necessary to filter out entire services or modules, use optional argument
+        // to specify the type (service, module, route).
+        return function(input) {
+            return input.filter(function(item) {
+                return item.url !== "/cas/login";
+            });
+        };
+    });
 })();

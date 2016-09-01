@@ -49,7 +49,7 @@
             var version = "1.3.0";
             var request = $http({
                 method: "get",
-                url: "https://s3.amazonaws.com/thinknode-desktop-client/current.json"
+                url: "https://cdn.thinknode.com/desktop-client/current.json"
             });
             return request.then(function(res) {
                 if(res.data.version !== version) {
