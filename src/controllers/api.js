@@ -118,8 +118,6 @@
                 $scope.storage.set('context', lastContext);
             }
             // Reset current settings
-            var type = $scope.currentRoute.type;
-            $scope.currentRoute.hasBody = type === 'post' || type === 'put' || type === 'patch';
             $scope.currentParams = $scope.paramMap[$scope.currentRoute.id].currentParams;
             $scope.currentQuery = $scope.paramMap[$scope.currentRoute.id].currentQuery;
             $scope.current.body = $scope.paramMap[$scope.currentRoute.id].currentBody;
@@ -357,7 +355,7 @@
             if ($scope.currentRoute.url === "/calc/:id/logs/:type") {
                 opts.transformResponse = [];
             }
-            if ($scope.currentRoute.hasBody) {
+            if ($scope.currentRoute.request) {
                 if (buf) {
                     opts.headers['Content-Type'] = 'application/octet-stream';
                     opts.data = new Uint8Array(buf);
