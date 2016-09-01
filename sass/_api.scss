@@ -342,6 +342,13 @@
             .request-headers {
                 padding-bottom: 10px;
             }
+
+            .request-headers:after {
+                clear: both;
+                content: "";
+                display: block;
+            }
+
             .header-value {
                 border-radius: 5px;
                 display: inline-block;
