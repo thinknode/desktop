@@ -22,7 +22,7 @@
             <div id="api-route-dropdown" ng-show="showRoutes">
                 <div class="dropdown-resource" ng-repeat="resource in currentModule.resources">
                     <span>{{resource.name}}</span>
-                    <div class="dropdown-route" ng-repeat="route in resource.routes | routeFilter" ng-click="selectRoute($event, $parent.$index, $index)">
+                    <div class="dropdown-route" ng-repeat="route in resource.routes | routeFilter" ng-click="selectRoute($event, $parent.$index, route)">
                         <span class="type">{{route.type}}</span>
                         <span class="url">{{route.url}}</span>
                         <span class="title">({{route.title}})</span>
