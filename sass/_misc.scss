@@ -24,3 +24,10 @@
 .spacer {
     @include flex(1);
 }
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// remove paddings
+
+.no-pad-top {
+	padding-top: 0 !important;
+}

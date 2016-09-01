@@ -82,7 +82,7 @@
                  }" ng-model="current.body"></div>
             <div ng-if="hasCurrentBuffer">Buffer currently selected</div>
         </div>
-        <div id="api-action" ng-if="currentRoute">
+        <div id="api-action" ng-if="currentRoute" class="no-pad-top">
             <div class="spacer"></div>
             <button class="send" ng-click="send()" ladda="sendingRequest" ng-class="currentRoute.type">{{currentRoute.type}}</button>
         </div>
