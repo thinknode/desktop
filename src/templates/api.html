@@ -76,17 +76,33 @@
             </div>
         </div>
         <div id="api-body" ng-if="currentRoute.request">
-            <div id="api-body-header" ng-if="currentRoute.id == 'services-iss-objects-v1-0-create'">
-                <h2>Body</h2>
-                <div class="spacer"></div>
-                <button class="clear" ng-click="clearFile()" ng-disabled="!hasCurrentBuffer">Clear File</button>
-                <button class="action" ng-click="selectFile()">Select File</button>
-            </div>
-            <div ui-ace="{
-                 mode: 'json',
-                 onLoad: aceLoaded
-                 }" ng-model="current.body"></div>
-            <div ng-if="hasCurrentBuffer">Buffer currently selected</div>
+            <md-tabs>
+                <md-tab label="Request">
+                    <div id="api-body-header" ng-if="currentRoute.id == 'services-iss-objects-v1-0-create'">
+                        <h2>Body</h2>
+                        <div class="spacer"></div>
+                        <button class="clear" ng-click="clearFile()" ng-disabled="!hasCurrentBuffer">Clear File</button>
+                        <button class="action" ng-click="selectFile()">Select File</button>
+                    </div>
+                    <div ui-ace="{
+                         mode: 'json',
+                         onLoad: aceLoaded
+                         }" ng-model="current.body"></div>
+                    <div ng-if="hasCurrentBuffer">Buffer currently selected</div>
+                </md-tab>
+                <md-tab ng-show="currentType" ng-repeat="example in currentType.str_examples" label="Example {{$index + 1}}">
+                    <div ui-ace="{
+                         mode: 'json',
+                         onLoad: aceLoaded
+                         }" ng-model="example"></div>
+                </md-tab>
+                <md-tab ng-show="currentType" label="Schema">
+                    <div ui-ace="{
+                         mode: 'json',
+                         onLoad: aceLoaded
+                         }" ng-model="currentType.str_schema"></div>
+                </md-tab>
+            </md-tabs>
         </div>
         <div id="api-action" ng-if="currentRoute" ng-class="{'no-pad-top': currentResultString && !currentRoute.params && !currentRoute.query && !currentRoute.request}">
             <div class="spacer"></div>

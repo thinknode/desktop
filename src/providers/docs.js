@@ -100,7 +100,20 @@
         };
 
         Docs.prototype.type = function(name) {
-
+            if (!this._types[name]) {
+                this._types[name] = this.$http({
+                    method: 'GET',
+                    url: this._root + '/' + this._version + '/types/' + name + '.json'
+                }).then(function(res) {
+                    res.data.str_examples = [];
+                    for (var i = 0; i < res.data.examples.length; ++i) {
+                        res.data.str_examples.push(JSON.stringify(res.data.examples[i], null, 4));
+                    }
+                    res.data.str_schema = JSON.stringify(res.data.schema, null, 4);
+                    return res.data;
+                });
+            }
+            return this._types[name];
         };
 
         // --------------------------------------------------
