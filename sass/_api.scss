@@ -276,19 +276,6 @@
             @include flexbox;
             margin-bottom: 0 !important;
 
-            // div.route-url {
-            //     @include flex(0 0 auto);
-
-            //     // pre.route-url {
-            //     //     overflow-x: auto;
-            //     //     white-space: pre;
-
-            //     //     // span {
-            //     //     //     display: inline;
-            //     //     // }
-            //     // }
-            // }
-
             button {
                 &.get {
                     background: $blue !important;
@@ -392,6 +379,11 @@
                 pre {
                     position: relative;
                     code {
+                        background-color: white;
+                        border: 1px solid #d5d9d9;
+                        border-radius: 3px;
+                        color: #737575;
+                        padding: 10px;
                         overflow-x: auto;
                         width: 100%;
                         position: absolute;

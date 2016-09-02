@@ -441,7 +441,7 @@
                 params: "=",
                 query: "="
             },
-            template: '<pre class="route-url"><code>{{full}}<code></pre>'
+            template: '<pre class="route-url"><code>{{full}}</code></pre>'
         };
     }]).filter('routeFilter', function() {
         // If it becomes necessary to filter out entire services or modules, use optional argument
