@@ -385,6 +385,20 @@
             min-height: 200px;
             width:90%;
         }
+
+        .route-urls {
+            min-height: 80px;
+            .urls {
+                pre {
+                    position: relative;
+                    code {
+                        overflow-x: auto;
+                        width: 100%;
+                        position: absolute;
+                    }
+                }
+            }
+        }
     }
 }
 
