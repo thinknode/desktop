@@ -31,6 +31,12 @@
             </div>
         </div>
 
+        <div class="route-urls">
+            <div class="urls">
+                <span ng-if="currentRoute" route-url route="currentRoute" params="currentParams" query="currentQuery"></span>
+            </div>
+        </div>
+
         <div class="api-result" ng-show="currentResultString">
             <div class="request-headers" >
                 <div class="headers-tab" ng-click='clickRequestHeaders($event)' ng-class="currentRoute.type">
@@ -82,7 +88,7 @@
                  }" ng-model="current.body"></div>
             <div ng-if="hasCurrentBuffer">Buffer currently selected</div>
         </div>
-        <div id="api-action" ng-if="currentRoute" ng-class="{'no-pad-top': currentResultString}">
+        <div id="api-action" ng-if="currentRoute" ng-class="{'no-pad-top': currentResultString && !currentRoute.params && !currentRoute.query && !currentRoute.request}">
             <div class="spacer"></div>
             <button class="send" ng-click="send()" ladda="sendingRequest" ng-class="currentRoute.type">{{currentRoute.type}}</button>
         </div>

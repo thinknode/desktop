@@ -372,6 +372,25 @@
             min-height: 200px;
             width:90%;
         }
+
+        .route-urls {
+            min-height: 80px;
+            .urls {
+                pre {
+                    position: relative;
+                    code {
+                        background-color: white;
+                        border: 1px solid #d5d9d9;
+                        border-radius: 3px;
+                        color: #737575;
+                        padding: 10px;
+                        overflow-x: auto;
+                        width: 100%;
+                        position: absolute;
+                    }
+                }
+            }
+        }
     }
 }
 

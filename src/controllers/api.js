@@ -416,7 +416,34 @@
         '$anchorScroll',
         '$rootScope',
         apiController
-    ]).filter('routeFilter', function() {
+    ]).directive('routeUrl', ['session', function(session) {
+        var _ = require('lodash');
+
+        return {
+            link: function($scope, elem, attrs, ctrl) {
+                var update = function() {
+                    for (var param in $scope.query) {
+                        if ($scope.query[param] === "" ||
+                            !_.find($scope.route.query, "field", param)) {
+                            delete $scope.query[param];
+                        }
+                    }
+                    $scope.full = session.url($scope.route.url, $scope.params, $scope.query);
+                };
+                $scope.$watch('route', update);
+                $scope.$watch('params', update, true);
+                $scope.$watch('query', update, true);
+            },
+            restrict: 'A',
+            replace: 'true',
+            scope: {
+                route: "=",
+                params: "=",
+                query: "="
+            },
+            template: '<pre class="route-url"><code>{{full}}</code></pre>'
+        };
+    }]).filter('routeFilter', function() {
         // If it becomes necessary to filter out entire services or modules, use optional argument
         // to specify the type (service, module, route).
         return function(input) {
