@@ -162,6 +162,12 @@
             $scope.storage.set('paramMap', $scope.paramMap);
             $scope.currentResource = $scope.currentModule.resources[resourceIndex];
             $scope.currentRoute = $scope.currentResource.routes[routeIndex];
+            if ($scope.currentRoute.request) {
+                $docs.type($scope.currentRoute.request).then(function(type) {
+                    $scope.currentType = type;
+                    console.log(type);
+                });
+            }
             routeMap[$scope.currentModule.id] = {
                 lastResourceIndex: resourceIndex,
                 lastRouteIndex: routeIndex
