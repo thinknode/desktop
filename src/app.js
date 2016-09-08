@@ -91,6 +91,12 @@
                 controller: 'recordsController'
             });
 
+            $stateProvider.state('devkit.calc', {
+                url: '/calc',
+                templateUrl: './src/templates/calc.html',
+                controller: 'calcController'
+            });
+
             // --------------------------------------------------
             // Develop
 

@@ -24,9 +24,6 @@
 
         var _ = require('lodash');
         var fs = require('fs');
-        var msgpack = require('msgpack5')({
-            forceFloat64: true
-        });
         var request = require('request');
         var remote = require('remote');
         var dialog = remote.require('dialog');
@@ -163,7 +160,7 @@
         }
 
         /** 
-         * @summary Given a reference id, retrieves the .
+         * @summary Given a reference id, retrieves the immutable id.
          *
          * @param {string} id - The reference id.
          * @returns {object} An object containing properties for the immutable id and the type of
@@ -174,7 +171,7 @@
             if (typeof memcache[key] !== "undefined") {
                 return $q.resolve(memcache[key]);
             } else {
-                memcache[key] = [];
+                memcache[key] = {};
                 return $http({
                     method: "GET",
                     url: session.url("/iss/:id/immutable", {
@@ -339,7 +336,7 @@
                 return resolveImmutable($scope.selected.immutable).then(function(immutable) {
                     request.get({
                         uri: session.url("/iss/immutable/:id", {
-                            id: immutable
+                            id: immutable.immutable
                         }, {
                             context: $scope.context
                         }),
@@ -422,8 +419,6 @@
 
         /**
          * @summary Refreshes the state of the visualizer hierarchy.
-         * @description
-         * This should be used
          *
          * @param {boolean} force - Indicates whether the refresh operation should be forced (in the
          *   case that the user has entered in a new context, for instance).

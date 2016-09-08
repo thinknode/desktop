@@ -1,0 +1,211 @@
+#calc-visualizer {
+    @include flexbox;
+    @include flex-dir(column);
+
+    background: $offwhite;
+    width: 100%;
+
+    #calc-visualizer-header {
+        @include flexbox;
+        @include flex(0 0 auto);
+
+        background: white;
+        border-bottom: 1px solid $border-silver;
+        height: 55px;
+        padding: 10px;
+        width: 100%;
+
+        .title, .header-error {
+            display: block;
+            color: #7e8181;
+            font-family: 'Gotham-Book', arial, sans-serif;
+            line-height: 33px;
+        }
+
+        .header-error {
+            color: $error-red;
+            margin-right: 10px;
+        }
+
+        i {
+            cursor: pointer;
+            font-size: 20px;
+            line-height: 33px;
+            padding: 0 10px;
+        }
+    }
+
+    #calc-visualizer-main {
+        @include flexbox;
+        @include flex-dir(row);
+        @include flex(1 0 auto);
+
+        #calc-visualizer-graph {
+            @include flexbox;
+            @include flex(1 0 auto);
+
+            // set the container width and make scrollable
+            // remove the fixed widths for left nav and meta panel
+            width: calc(100vw - 650px);
+            overflow-x: auto;
+
+            #calc-visualizer-graph-container {
+                position: relative;
+
+                input {
+                    position: absolute;
+                    top: 10px;
+                    left: 10px;
+                    width: 300px;
+                }
+
+                svg {
+                    height: calc(100vh - 55px);
+
+                    .node {
+                        cursor: pointer;
+                    }
+
+                    .node {
+
+                        circle {
+                            stroke: $completed;
+                            stroke-width: 1.5px;
+                        }
+
+                        &.completed circle {
+                            fill: $completed;
+                            stroke: $completed;
+                        }
+
+                        &.failed circle {
+                            fill: $failed;
+                            stroke: $failed;
+                        }
+
+                        &.calculating circle {
+                            fill: $calculating;
+                            stroke: $calculating;
+                        }
+
+                        &.uploading circle {
+                            fill: $calculating;
+                            stroke: $calculating;
+                        }
+
+                        &.ready circle {
+                            fill: $ready;
+                            stroke: $ready;
+                        }
+
+                        &.empty circle {
+                            fill: #fff;
+                            stroke-width: 1.5px;
+                        }
+
+                        &.selected circle {
+                            stroke-width: 3px;
+                            stroke: $grey;
+                        }
+                    }
+
+                    .node text {
+                        font: 10px sans-serif;
+                    }
+
+                    .link {
+                        fill: none;
+                        stroke: #ccc;
+                        stroke-width: 1.5px;
+                    }
+                }
+            }
+        }
+
+        #calc-visualizer-details {
+            @include flexbox;
+            @include flex-direction(column);
+            @include flex(0 0 450px);
+            height: calc(100vh - 55px);
+
+            background: $offwhite;
+            border-left: 1px solid $border-silver;
+            padding: 15px;
+
+            .details-content {
+                // set the container height and make scrollable
+                // remove the fixed heights for header, filter box, and scrollbar
+                height: calc(100vh - 135px);
+                // height: calc(100vh - 55px);
+                overflow-y: auto;
+            }
+
+            .details-error {
+                background: white;
+                border: 1px solid $error-red;
+                border-radius: 4px;
+                color: $error-red;
+                display: block;
+                font-family: 'Gotham-Book', arial, sans-serif;
+                font-size: 12px;
+                margin-bottom: 15px;
+                padding: 5px;
+            }
+
+            h3 {
+                color: #7e8181;
+                font-family: 'Gotham-Light', arial, sans-serif;
+                font-size: 20px;
+                margin-bottom: 10px;
+            }
+
+            li {
+                font-family: 'Gotham-Light', arial, sans-serif;
+                font-size: 12px;
+
+                margin-bottom: 15px;
+
+                button {
+                    @include flex(1 0 auto);
+
+                    background: $charcoal;
+                    margin-top: 10px;
+                    min-width: 25px !important;
+                    padding: 5px 0;
+                    width: 25px !important;
+                }
+
+                &.record {
+                    li {
+                        border-left: 4px solid $border-silver;
+                        font-size: 11px;
+                        padding-left: 5px;
+                    }
+
+                    ul {
+                        margin-left: 10px;
+                        margin-top: 10px;
+                    }
+                }
+            }
+
+            button {
+                @include flex(1 0 auto);
+
+                background: $charcoal;
+                margin-bottom: 10px;
+                min-width: 25px !important;
+                padding: 5px;
+                // width: 25px !important;
+            }
+
+            .long-id {
+                font-size: 10px;
+            }
+
+            .ace_editor {
+                margin-bottom: 20px;
+            }
+        }
+    }
+}
