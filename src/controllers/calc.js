@@ -183,6 +183,12 @@
             });
         }
 
+        /**
+         * @summary Computes a space-delimited list of classes for the given node.
+         *
+         * @param {object} d - The node to set the classes on.
+         * @returns {string} A space-delimited list of classes.
+         */
         function nodeClass(d) {
             var cls = "node";
             cls += d._children ? " full" : " empty";
@@ -408,6 +414,7 @@
                         obj.data = data;
                     });
                 } else {
+                    $scope.error = "Invalid id: " + data.reference;
                     throw new Error("Invalid id: " + data.reference);
                 }
             } else if (typeof data.value !== "undefined") {
@@ -867,6 +874,15 @@
                 update(root);
             }));
         };
+
+        // --------------------------------------------------
+        // Resize event
+
+        angular.element($window).bind('resize', function() {
+
+            // Update svg
+            update(root);
+        });
 
         // --------------------------------------------------
         // Initialization

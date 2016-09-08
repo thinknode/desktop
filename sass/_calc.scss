@@ -131,25 +131,10 @@
             background: $offwhite;
             border-left: 1px solid $border-silver;
             padding: 15px;
+            overflow-y: auto;
 
-            .details-content {
-                // set the container height and make scrollable
-                // remove the fixed heights for header, filter box, and scrollbar
-                height: calc(100vh - 135px);
-                // height: calc(100vh - 55px);
-                overflow-y: auto;
-            }
-
-            .details-error {
-                background: white;
-                border: 1px solid $error-red;
-                border-radius: 4px;
-                color: $error-red;
-                display: block;
-                font-family: 'Gotham-Book', arial, sans-serif;
-                font-size: 12px;
-                margin-bottom: 15px;
-                padding: 5px;
+            > .details-content > div:not(:first-child) {
+                margin-top: 10px;
             }
 
             h3 {
@@ -157,6 +142,12 @@
                 font-family: 'Gotham-Light', arial, sans-serif;
                 font-size: 20px;
                 margin-bottom: 10px;
+            }
+
+            h4 {
+                color: $charcoal-light;
+                font-family: 'Gotham-Light', arial, sans-serif;
+                font-size: 14px;
             }
 
             li {
