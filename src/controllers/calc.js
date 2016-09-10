@@ -13,6 +13,15 @@
     function calcController($scope, session, $http, $q, $rootScope, $window, $mdDialog) {
 
         // --------------------------------------------------
+        // Local requires
+
+        var d3 = require('d3');
+        var fs = require('fs');
+        var request = require('request');
+        var remote = require('remote');
+        var dialog = remote.require('dialog');
+
+        // --------------------------------------------------
         // Local variables
 
         var deregisterInit;
@@ -40,14 +49,6 @@
 
         var tree = d3.tree()
             .size([computedHeight, computedWidth]);
-
-        // --------------------------------------------------
-        // Local requires
-
-        var fs = require('fs');
-        var request = require('request');
-        var remote = require('remote');
-        var dialog = remote.require('dialog');
 
         var init = function() {
             deregisterInit();
@@ -199,6 +200,36 @@
                 cls += " selected";
             }
             return cls;
+        }
+
+        function nodeText(d) {
+            var data, label = "";
+            // Label with respect to parent.
+            if (d.parent) {
+                data = d.parent.data;
+                if (data.type === "function") {
+                    label += "f(x):";
+                } else if (data.type === "posted") {
+                    label += "{}";
+                } else {
+                    label += data.type;
+                }
+                data = d.data;
+                label += data.ptype + " > ";
+            }
+            // Label with respect to self
+            data = d.data;
+            if (data.type === "function") {
+                label += "f(x)";
+            } else if (data.type === "posted") {
+                label += "{}";
+            } else {
+                label += data.type;
+            }
+            if (data.status && data.status.type === "calculating") {
+                label += " (" + (data.status.data.calculating.progress * 100).toFixed(2) + "%)";
+            }
+            return label;
         }
 
         /** 
@@ -509,32 +540,7 @@
                 .attr("text-anchor", function(d) {
                     return d.children || d._children ? "end" : "start";
                 })
-                .text(function(d) {
-                    var data, label = "";
-                    // Label with respect to parent.
-                    if (d.parent) {
-                        data = d.parent.data;
-                        if (data.type === "function") {
-                            label += "f(x):";
-                        } else if (data.type === "posted") {
-                            label += "{}";
-                        } else {
-                            label += data.type;
-                        }
-                        data = d.data;
-                        label += data.ptype + " > ";
-                    }
-                    // Label with respect to self
-                    data = d.data;
-                    if (data.type === "function") {
-                        label += "f(x)";
-                    } else if (data.type === "posted") {
-                        label += "{}";
-                    } else {
-                        label += data.type;
-                    }
-                    return label;
-                })
+                .text(nodeText)
                 .style("fill-opacity", 1e-6);
 
             // Transition nodes to their new position.
@@ -671,7 +677,7 @@
                     "timeout": 180
                 });
             } else if (obj.status.type === "calculating") {
-                progress = obj.status.body.calculating.progress + 0.01;
+                var progress = obj.status.data.calculating.progress + 0.01;
                 if (progress >= 1) {
                     params.url = session.url("/calc/:id/status", {
                         "id": id
@@ -705,6 +711,7 @@
                 if (!obj.status) {
                     obj.status = {};
                 }
+                obj.status.data = data;
                 obj.status.body = JSON.stringify(data, null, 4);
                 if (data.queued === "pending") {
                     obj.status.type = "pending";
@@ -728,6 +735,8 @@
             }).then(function(retry) {
                 // Update classes
                 svg.selectAll("g.node").attr("class", nodeClass);
+                // Update labels
+                svg.selectAll("g.node text").text(nodeText);
                 if (retry) {
                     return watchStatus(id, obj);
                 }
