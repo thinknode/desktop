@@ -52,11 +52,23 @@
             #calc-visualizer-graph-container {
                 position: relative;
 
-                input {
+                div.controls {
                     position: absolute;
                     top: 10px;
                     left: 10px;
                     width: 300px;
+
+                    button {
+                        background: $charcoal;
+                        padding: 5px 0;
+                        min-width: 25px !important;
+
+                        &:disabled {
+                            cursor: not-allowed;
+                            background: $grey;
+                            color: $tan;
+                        }
+                    }
                 }
 
                 svg {
@@ -68,42 +80,43 @@
 
                     .node {
 
-                        circle {
-                            stroke: $completed;
+                        circle.main {
+                            fill: $grey;
+                            stroke: $grey;
                             stroke-width: 1.5px;
                         }
 
-                        &.completed circle {
+                        &.completed circle.main {
                             fill: $completed;
                             stroke: $completed;
                         }
 
-                        &.failed circle {
+                        &.failed circle.main {
                             fill: $failed;
                             stroke: $failed;
                         }
 
-                        &.calculating circle {
+                        &.calculating circle.main {
                             fill: $calculating;
                             stroke: $calculating;
                         }
 
-                        &.uploading circle {
+                        &.uploading circle.main {
                             fill: $calculating;
                             stroke: $calculating;
                         }
 
-                        &.ready circle {
+                        &.ready circle.main {
                             fill: $ready;
                             stroke: $ready;
                         }
 
-                        &.empty circle {
+                        &.empty circle.main {
                             fill: #fff;
                             stroke-width: 1.5px;
                         }
 
-                        &.selected circle {
+                        &.selected circle.main {
                             stroke-width: 3px;
                             stroke: $grey;
                         }
@@ -142,6 +155,22 @@
                 font-family: 'Gotham-Light', arial, sans-serif;
                 font-size: 20px;
                 margin-bottom: 10px;
+
+                small {
+                    font-size: 14px;
+                }
+
+                button {
+                    background: $charcoal;
+                    padding: 5px 0;
+                    min-width: 25px !important;
+
+                    &:disabled {
+                        cursor: not-allowed;
+                        background: $grey;
+                        color: $tan;
+                    }
+                }
             }
 
             h4 {
@@ -187,7 +216,6 @@
                 margin-bottom: 10px;
                 min-width: 25px !important;
                 padding: 5px;
-                // width: 25px !important;
             }
 
             .long-id {
@@ -196,6 +224,85 @@
 
             .ace_editor {
                 margin-bottom: 20px;
+            }
+        }
+
+        #calc-visualizer-search {
+            @include flexbox;
+            @include flex-direction(column);
+            @include flex(0 0 450px);
+            height: calc(100vh - 55px);
+
+            background: $offwhite;
+            border-left: 1px solid $border-silver;
+            padding: 15px;
+
+            i.close {
+                cursor: pointer;
+                font-size: 20px;
+                line-height: 33px;
+                padding: 0 10px;
+            }
+
+            div.search-params {
+                margin-top: 10px;
+
+                p {
+                    margin-top: 5px;
+                    color: #878a8a;
+                    font-size: .8rem;
+                    margin-bottom: 0;
+                }
+            }
+
+            div.search-results {
+                border-top: 1px solid $border-silver;
+                margin-top: 10px;
+                overflow-y: auto;
+
+                div.search-result {
+                    padding: 10px;
+
+                    &:hover {
+                        cursor: pointer;
+                        background-color: $silver-lighter;
+                    }
+
+                    &:not(:first) {
+                        border-top: 1px solid $border-silver;
+                    }
+
+                    span.search-result-id {
+                        font-size: 14px;
+
+                        &:before {
+                            content: "\f15b";
+                            font-family: FontAwesome;
+                            margin-right: 3px;
+                        }
+                    }
+
+                    span.search-result-type, span.search-result-size, span.search-result-occurrences {
+                        font-size: 10px;
+                        margin-left: 15px;
+                    }
+
+                    div.search-result-buttons {
+                        margin-left: 15px;
+
+                        button {
+                            background: $charcoal;
+                            padding: 5px 0;
+                            min-width: 25px !important;
+
+                            &:disabled {
+                                cursor: not-allowed;
+                                background: $grey;
+                                color: $tan;
+                            }
+                        }
+                    }
+                }
             }
         }
     }

@@ -54,6 +54,12 @@
             deregisterInit();
             $scope.context = $scope.storage.get('context');
             $scope.id = $scope.storage.get('id');
+            $scope.searchRequest = $scope.storage.get('searchRequest');
+            $scope.searchResult = $scope.storage.get('searchResult');
+            $scope.view = $scope.storage.get('calcView');
+            $scope.searchHistory = $scope.storage.get('searchHistory') || [];
+            var selected = $scope.storage.get('selectedSearchTab');
+            $scope.selectedSearchTab = (typeof selected === "number") ? selected : 0;
             $scope.refresh();
         };
 
@@ -199,9 +205,18 @@
             if (d.selected) {
                 cls += " selected";
             }
+            if (d.highlight) {
+                cls += " highlight";
+            }
             return cls;
         }
 
+        /**
+         * @summary Computes the text label for the given node.
+         *
+         * @param {object} d - The node to be labelled.
+         * @returns {string} A string that labels the node.
+         */
         function nodeText(d) {
             var data, label = "";
             // Label with respect to parent.
@@ -337,6 +352,35 @@
         }
 
         /**
+         * @summary Highlights matching nodes and opens it's ancestors.
+         *
+         * @param {object} node - A d3 node.
+         * @param {string} id - An id of a calculation to reveal (highlight).
+         */
+        function reveal(node, id) {
+            if (node.data.id === id) {
+                node.highlight = true;
+                return true;
+            }
+            var i, res = false;
+            if (node.children) {
+                for (i = 0; i < node.children.length; ++i) {
+                    res = res || reveal(node.children[i], id);
+                }
+            } else if (node._children) {
+                for (i = 0; i < node._children.length; ++i) {
+                    if (reveal(node._children[i], id)) {
+                        res = true;
+                    }
+                }
+                if (res) {
+                    toggle(node);
+                }
+            }
+            return res;
+        }
+
+        /**
          * @summary Spawns a node based on the given data.
          *
          * @param {object} data - The data to use to contruct the node.
@@ -347,6 +391,18 @@
                 var service = getService(data.reference);
                 if (service === "calc") {
                     return getRequest(data.reference).then(function(request) {
+                        // Add to request array
+                        var type;
+                        for (var p in request) {
+                            type = p;
+                            break;
+                        }
+                        $scope.requests.push({
+                            id: data.reference,
+                            type: type,
+                            request: JSON.stringify(request)
+                        });
+
                         var collection = [];
                         // Add common properties
                         obj.id = data.reference;
@@ -434,6 +490,11 @@
                             if (obj.status.type === "completed") {
                                 return getObject(data.reference).then(function(data) {
                                     obj.data = data;
+                                    $scope.results.push({
+                                        id: obj.id,
+                                        data: obj.data,
+                                        type: obj.type
+                                    });
                                 });
                             }
                         });
@@ -443,6 +504,11 @@
                     obj.id = data.reference;
                     return getObject(data.reference).then(function(data) {
                         obj.data = data;
+                        $scope.results.push({
+                            id: obj.id,
+                            data: obj.data,
+                            type: obj.type
+                        });
                     });
                 } else {
                     $scope.error = "Invalid id: " + data.reference;
@@ -530,7 +596,14 @@
                 });
 
             nodeEnter.append("circle")
+                .attr("class", "main")
                 .attr("r", "1e-6");
+
+            nodeEnter.append("circle")
+                .attr("class", "highlight")
+                .attr("r", "1e-6")
+                .style("fill-opacity", 0)
+                .style("stroke", "rgba(0, 0, 0, 0)");
 
             nodeEnter.append("text")
                 .attr("x", function(d) {
@@ -551,8 +624,26 @@
                     return "translate(" + d.y + "," + d.x + ")";
                 });
 
-            nodeUpdate.select("circle")
+            nodeUpdate.select("circle.main")
                 .attr("r", 4.5);
+
+            nodeUpdate.select("circle.highlight")
+                .attr("r", 9)
+                .style("fill-opacity", 0)
+                .style("stroke", function(d) {
+                    if (d.highlight) {
+                        return "rgba(126, 129, 129, 0.5";
+                    } else {
+                        return "rgba(0, 0, 0, 0)";
+                    }
+                })
+                .style("stroke-width", function(d) {
+                    if (d.highlight) {
+                        return "8px";
+                    } else {
+                        return "0px";
+                    }
+                });
 
             nodeUpdate.select("text")
                 .style("fill-opacity", 1);
@@ -573,7 +664,10 @@
                 d.selected = false;
             });
 
-            nodeExit.select("circle")
+            nodeExit.select("circle.main")
+                .attr("r", 1e-6);
+
+            nodeExit.select("circle.highlight")
                 .attr("r", 1e-6);
 
             nodeExit.select("text")
@@ -705,6 +799,15 @@
                     "status": "completed",
                     "timeout": 180
                 });
+            } else { // if (obj.status.type === "completed" || obj.status.type === "failed")
+                params.url = session.url("/calc/:id/status", {
+                    "id": id
+                }, {
+                    "context": $scope.context,
+                    "status": "queued",
+                    "queued": "pending",
+                    "timeout": 180
+                });
             }
             return $http(params).then(function(res) {
                 var data = res.data;
@@ -750,6 +853,9 @@
         $scope.id = null;
         $scope.bucket = null;
         $scope.selected = null;
+        $scope.view = 'details';
+        $scope.requests = [];
+        $scope.results = [];
 
         // --------------------------------------------------
         // Scope methods
@@ -864,6 +970,7 @@
                 return (refreshPromise = $q.resolve());
             }
             $scope.storage.set('id', $scope.id);
+            $scope.requests.length = 0;
             // Return if the context or id is invalid.
             return (refreshPromise = inspectContext().then(function(info) {
                 if (info.bucket !== "#ref") {
@@ -884,6 +991,52 @@
             }));
         };
 
+        /**
+         * @summary Inspects the calculation given its id.
+         *
+         * @param {string} id - The id of the calculation.
+         */
+        $scope.inspect = function(id) {
+            $scope.searchHistory.push($scope.id);
+            $scope.storage.set('searchHistory', $scope.searchHistory);
+            $scope.id = id;
+            $scope.storage.set('id', $scope.id);
+            $scope.refresh(true);
+        };
+
+        /**
+         * @summary Highlights the nodes matching the calculation given by its id.
+         *
+         * @param {string} id - The id of the calculation.
+         */
+        $scope.reveal = function(id) {
+            root.each(function(d) {
+                d.highlight = false;
+            });
+            reveal(root, id);
+            update(root);
+        };
+
+        /**
+         * @summary Allows the right sidebar to be toggleable between details and search views.
+         *
+         * @param {string} view - The name of the view. Either 'details' or 'search'.
+         */
+        $scope.show = function(view) {
+            $scope.view = view;
+            $scope.storage.set("calcView", view);
+        };
+
+        /**
+         * @summary Switches to the previously selected id.
+         */
+        $scope.undo = function() {
+            $scope.id = $scope.searchHistory.pop();
+            $scope.storage.set('id', $scope.id);
+            $scope.storage.set('searchHistory', $scope.searchHistory);
+            $scope.refresh(true);
+        };
+
         // --------------------------------------------------
         // Resize event
 
@@ -900,6 +1053,100 @@
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Filters
+
+    function occurrences(str, substring) {
+        if (substring.length === 0) return substring.length + 1;
+
+        var n = 0,
+            pos = 0,
+            step = substring.length;
+
+        while (true) {
+            pos = str.indexOf(substring, pos);
+            if (pos >= 0) {
+                ++n;
+                pos += step;
+            } else break;
+        }
+        return n;
+    }
+
+    function requestFilter() {
+        return function(input, filter) {
+            if (typeof filter !== "string" || filter === "") {
+                return [];
+            }
+            filter = filter.toLowerCase();
+            var out = [];
+            angular.forEach(input, function(item) {
+                var str = item.request.toLowerCase();
+                if (str.indexOf(filter) > -1) {
+                    item.occurrences = occurrences(str, filter);
+                    out.push(item);
+                }
+            });
+            return out;
+        };
+    }
+
+    function parseFilter(filter) {
+        var filterObj = {};
+
+        // Separate space delimited parts
+        var parts = filter.split(" ");
+
+        // For each part determine parameter type
+        var part, num;
+        for (var i = 0; i < parts.length; ++i) {
+            part = parts[i];
+            if (part.indexOf("type:") === 0) {
+                filterObj.type = part.substring(5);
+            }
+            if (part.indexOf("size:>") === 0) {
+                num = Number.parseInt(part.substring(6));
+                if (!Number.isNaN(num)) {
+                    filterObj.lower = num;
+                }
+            }
+            if (part.indexOf("size:<") === 0) {
+                num = Number.parseInt(part.substring(6));
+                if (!Number.isNaN(num)) {
+                    filterObj.upper = num;
+                }
+            }
+        }
+
+        return filterObj;
+    }
+
+    function resultFilter() {
+        return function(input, filter) {
+            if (typeof filter !== "string" || filter === "") {
+                return [];
+            }
+            var parsed = parseFilter(filter.toLowerCase());
+            if (Object.keys(parsed).length === 0) {
+                return [];
+            }
+            var out = [];
+            angular.forEach(input, function(item) {
+                if (typeof parsed.type === "string" && item.data.type.indexOf(parsed.type) < 0) {
+                    return;
+                }
+                if (typeof parsed.lower === "number" && item.data.size <= parsed.lower) {
+                    return;
+                }
+                if (typeof parsed.upper === "number" && item.data.size >= parsed.upper) {
+                    return;
+                }
+                out.push(item);
+            });
+            return out;
+        };
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('calcController', [
@@ -911,5 +1158,5 @@
         '$window',
         '$mdDialog',
         calcController
-    ]);
+    ]).filter('request', requestFilter).filter('result', resultFilter);
 })();

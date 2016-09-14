@@ -7,6 +7,7 @@
         <span class="title">Calculation Explorer<span ng-show="bucket"> - {{ bucket }}</span></span>
         <div class="spacer"></div>
         <span class="header-error" ng-show="error">{{ error }}</span>
+        <i class="fa fa-search" ng-click="show('search')"></i>
         <i id="calc-settings-target" class="fa fa-cog" ng-click="modifySettings($event)"></i>
     </div>
     <!-- -->
@@ -17,14 +18,20 @@
         
         <div id="calc-visualizer-graph">
             <div id="calc-visualizer-graph-container">
-                <input name="id" type="text" class="form-control" ng-model="id" ng-change="refresh(true)" placeholder="Id" ng-maxlength="32">
+                <div class="controls">
+                    <input name="id" type="text" class="form-control" ng-model="id" ng-change="refresh(true)" placeholder="Id" ng-maxlength="32">
+                    <button type="button" ng-if="searchHistory.length > 0" ng-click="undo()"><i class="fa fa-arrow-left"></i></button>
+                </div>
                 <svg></svg>
             </div>
         </div>
 
-        <div id="calc-visualizer-details">
+        <div id="calc-visualizer-details" ng-if="view === 'details'">
             <div class="details-content" ng-show="selected">
-                <h3>{{ selected.type }}</h3>
+                <h3>{{ selected.type }}<small id="details-content-id" ng-show="selected.id">
+                    <span>({{ selected.id }})<span>
+                    <button type="button" ng-click="inspect(selected.id)" ng-disabled="selected.id === id"><i class="fa fa-external-link"></i></button>
+                </small></h3>
                 <div id="details-content-status" ng-show="selected.type !== 'posted' && selected.type !== 'value'">
                     <h4>Status</h4>
                     <div ui-ace="{
@@ -61,6 +68,44 @@
                      }" ng-model="selected.request" readonly></div>
                     <button ng-click="downloadRequest()"><i class="fa fa-download"></i> JSON</button>
                 </div>
+            </div>
+        </div>
+
+        <div id="calc-visualizer-search" ng-if="view === 'search'">
+            <div class="details-content">
+                <h3>Search</h3>
+                <i class="fa fa-times close" ng-click="show('details')"></i>
+                <md-tabs md-selected="selectedSearchTab">
+                    <md-tab label="Request" md-on-select="storage.set('selectedSearchTab',0)">
+                        <div class="search-params">
+                            <input name="search" type="text" class="form-control" ng-model="searchRequest" ng-change="storage.set('searchRequest',searchRequest)">
+                            <p>Search across the contents of the JSON request bodies.</p>
+                        </div>
+                        <div class="search-results">
+                            <div class="search-result" ng-repeat="req in requests | request:searchRequest">
+                                <div><span class="search-result-id">{{req.id}}</span> <span class="search-result-type">{{req.type}}</span></div>
+                                <div><span class="search-result-occurrences">{{req.occurrences}} occurrence(s)</span></div>
+                                <div class="search-result-buttons">
+                                    <button type="button" ng-click="reveal(req.id)"><i class="fa fa-eye"></i></button>
+                                    <button type="button" ng-click="inspect(req.id)" ng-disabled="req.id === id"><i class="fa fa-external-link"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </md-tab>
+                    <md-tab label="Result" md-on-select="storage.set('selectedSearchTab',1)">
+                        <div class="search-params">
+                            <input name="search" type="text" class="form-control" ng-model="searchResult" ng-change="storage.set('searchResult',searchResult)">
+                            <p>Use <code>type:term</code> to search for results of a particular type or <code>size:&lt;#</code> to search for results less than a particular size or <code>size:&gt;#</code> to search for results greater than a particular size. Separate search parameters with a space.</p>
+                        </div>
+                        <div class="search-results">
+                            <div class="search-result" ng-repeat="res in results | result:searchResult">
+                                <div><span class="search-result-id">{{res.id}}</span> <span class="search-result-type">{{res.type}}</span></div>
+                                <div><span class="search-result-type">Type: {{res.data.type}}</div>
+                                <div><span class="search-result-size">Size: {{res.data.size}}</div>
+                            </div>
+                        </div>
+                    </md-tab>
+                </md-tabs>
             </div>
         </div>
 
