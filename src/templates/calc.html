@@ -73,8 +73,12 @@
 
         <div id="calc-visualizer-search" ng-if="view === 'search'">
             <div class="details-content">
-                <h3>Search</h3>
-                <i class="fa fa-times close" ng-click="show('details')"></i>
+
+                <div class="calc-vis-search-header">
+                    <h3>Search</h3>
+                    <i class="fa fa-times close" ng-click="show('details')"></i>
+                </div>
+
                 <md-tabs md-selected="selectedSearchTab">
                     <md-tab label="Request" md-on-select="storage.set('selectedSearchTab',0)">
                         <div class="search-params">
