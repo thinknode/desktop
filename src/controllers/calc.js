@@ -33,7 +33,7 @@
         var memcache = {};
 
         var margin = {
-            top: 20,
+            top: 10,
             right: 120,
             bottom: 20,
             left: 120
@@ -45,10 +45,10 @@
             .attr("height", computedHeight)
             .attr("width", computedWidth)
             .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            .attr("transform", "translate(" + margin.left + ",0)");
 
         var tree = d3.tree()
-            .size([computedHeight, computedWidth]);
+            .size([computedWidth, computedHeight]);
 
         var init = function() {
             deregisterInit();
@@ -227,7 +227,7 @@
                 } else if (data.type === "posted") {
                     label += "{}";
                 } else {
-                    label += data.type;
+                    label += data.type + ":";
                 }
                 data = d.data;
                 label += data.ptype + " > ";
@@ -311,10 +311,10 @@
         function resolveImmutable(id) {
             var key = $scope.context + "-" + id;
             if (typeof memcache[key] !== "undefined") {
-                return $q.resolve(memcache[key]);
+                return memcache[key];
             } else {
-                memcache[key] = {};
-                return $http({
+                var data = {};
+                return (memcache[key] = $http({
                     method: "GET",
                     url: session.url("/iss/:id/immutable", {
                         "id": id
@@ -326,7 +326,7 @@
                     }
                 }).then(function(res) {
                     if (res.status === 200) {
-                        memcache[key].immutable = res.data.id;
+                        data.immutable = res.data.id;
                     } else if (res.status === 202) {
                         return $q.reject(new Error("Incomplete calculation for id: " + id));
                     } else if (res.status === 204) {
@@ -345,9 +345,9 @@
                         }
                     });
                 }).then(function(res) {
-                    memcache[key].type = res.headers("Thinknode-Type");
-                    return memcache[key];
-                });
+                    data.type = res.headers("Thinknode-Type");
+                    return data;
+                }));
             }
         }
 
@@ -545,25 +545,43 @@
          */
         function update(source) {
             var maxDepth = 0;
+            var maxX = 0;
 
-            // Compute the new tree layout
-            var nodes = tree(root).descendants();
-            var links = nodes.slice(1);
-
-            // Normalize for fixed-depth.
-            nodes.forEach(function(d) {
+            // Compute maximum depth
+            tree(root).descendants().forEach(function(d) {
                 if (d.depth > maxDepth) {
                     maxDepth = d.depth;
                 }
-                d.y = d.depth * 180;
             });
 
             // Update height and width
             var computedHeight = container.node().getBoundingClientRect().height;
             var computedWidth = container.node().getBoundingClientRect().width;
-            computedWidth = Math.max(computedWidth, maxDepth * 180);
+            computedWidth = Math.max(computedWidth, 240 + maxDepth * 180);
+            if (typeof source.x0 === "undefined" || typeof source.y0 === "undefined") {
+                source.x0 = computedHeight / 2;
+                source.y0 = 0;
+            }
             d3.selectAll("svg").attr("height", computedHeight).attr("width", computedWidth);
-            tree.size([computedHeight, computedWidth]);
+            tree.size([computedWidth, computedHeight]);
+
+            // Compute maximum x.
+            tree(root).descendants().forEach(function(d) {
+                if (d.x > maxX) {
+                    maxX = d.x;
+                }
+            });
+
+            // Compute the new tree layout
+            var nodes = tree(root).descendants();
+            var links = nodes.slice(1);
+
+            // Normalize y for fixed-depth.
+            // Normalize x against contant height.
+            nodes.forEach(function(d) {
+                d.y = d.depth * 180;
+                d.x = (d.x / maxX) * (computedHeight - margin.top - margin.bottom);
+            });
 
             // Update the nodes...
             var node = svg.selectAll("g.node")
@@ -853,6 +871,7 @@
         $scope.id = null;
         $scope.bucket = null;
         $scope.selected = null;
+        $scope.loading = false;
         $scope.view = 'details';
         $scope.requests = [];
         $scope.results = [];
@@ -971,6 +990,8 @@
             }
             $scope.storage.set('id', $scope.id);
             $scope.requests.length = 0;
+            $scope.results.length = 0;
+            $scope.loading = true;
             // Return if the context or id is invalid.
             return (refreshPromise = inspectContext().then(function(info) {
                 if (info.bucket !== "#ref") {
@@ -985,9 +1006,16 @@
                     d.id = ++i;
                 });
                 root.children.forEach(collapse);
-                root.x0 = computedHeight / 2;
-                root.y0 = 0;
+                $scope.loading = false;
                 update(root);
+            }).catch(function(res) {
+                $scope.selected = null;
+                $scope.view = 'details';
+                if (res.data && res.data.message) {
+                    $scope.error = res.data.message;
+                } else {
+                    $scope.error = "An unexpected error occurred.";
+                }
             }));
         };
 
@@ -1131,6 +1159,9 @@
             }
             var out = [];
             angular.forEach(input, function(item) {
+                if (!item.data.type || item.data.size) {
+                    return;
+                }
                 if (typeof parsed.type === "string" && item.data.type.indexOf(parsed.type) < 0) {
                     return;
                 }

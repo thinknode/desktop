@@ -7,7 +7,9 @@
         <span class="title">Calculation Explorer<span ng-show="bucket"> - {{ bucket }}</span></span>
         <div class="spacer"></div>
         <span class="header-error" ng-show="error">{{ error }}</span>
-        <i class="fa fa-search" ng-click="show('search')"></i>
+        <i class="fa fa-spinner fa-spin" ng-show="loading"></i>
+        <i class="fa fa-arrow-left" ng-click="undo()" ng-show="searchHistory.length > 0"></i>
+        <i class="fa fa-search" ng-click="show('search')" ng-show="id.length === 32"></i>
         <i id="calc-settings-target" class="fa fa-cog" ng-click="modifySettings($event)"></i>
     </div>
     <!-- -->
@@ -20,9 +22,8 @@
             <div id="calc-visualizer-graph-container">
                 <div class="controls">
                     <input name="id" type="text" class="form-control" ng-model="id" ng-change="refresh(true)" placeholder="Id" ng-maxlength="32">
-                    <button type="button" ng-if="searchHistory.length > 0" ng-click="undo()"><i class="fa fa-arrow-left"></i></button>
                 </div>
-                <svg></svg>
+                <svg ng-hide="error"></svg>
             </div>
         </div>
 
@@ -73,12 +74,14 @@
 
         <div id="calc-visualizer-search" ng-if="view === 'search'">
             <div class="details-content">
-                <h3>Search</h3>
-                <i class="fa fa-times close" ng-click="show('details')"></i>
+                <div class="calc-vis-search-header">
+                    <h3>Search</h3>
+                    <i class="fa fa-times close" ng-click="show('details')"></i>
+                </div>
                 <md-tabs md-selected="selectedSearchTab">
                     <md-tab label="Request" md-on-select="storage.set('selectedSearchTab',0)">
                         <div class="search-params">
-                            <input name="search" type="text" class="form-control" ng-model="searchRequest" ng-change="storage.set('searchRequest',searchRequest)">
+                            <input name="search" type="text" class="form-control" ng-model="searchRequest" ng-change="storage.set('searchRequest',searchRequest)" ng-model-options="{'debounce': 250}">
                             <p>Search across the contents of the JSON request bodies.</p>
                         </div>
                         <div class="search-results">
@@ -102,6 +105,10 @@
                                 <div><span class="search-result-id">{{res.id}}</span> <span class="search-result-type">{{res.type}}</span></div>
                                 <div><span class="search-result-type">Type: {{res.data.type}}</div>
                                 <div><span class="search-result-size">Size: {{res.data.size}}</div>
+                                <div class="search-result-buttons">
+                                    <button type="button" ng-click="reveal(res.id)"><i class="fa fa-eye"></i></button>
+                                    <button type="button" ng-click="inspect(res.id)" ng-disabled="res.id === id"><i class="fa fa-external-link"></i></button>
+                                </div>
                             </div>
                         </div>
                     </md-tab>
