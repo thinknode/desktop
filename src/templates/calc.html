@@ -1,0 +1,145 @@
+<div id="calc-visualizer">
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Header -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <div id="calc-visualizer-header">
+        <span class="title">Calculation Explorer<span ng-show="bucket"> - {{ bucket }}</span></span>
+        <div class="spacer"></div>
+        <span class="header-error" ng-show="error">{{ error }}</span>
+        <i class="fa fa-spinner fa-spin" ng-show="loading"></i>
+        <i class="fa fa-arrow-left" ng-click="undo()" ng-show="searchHistory.length > 0"></i>
+        <i class="fa fa-search" ng-click="show('search')" ng-show="id.length === 32"></i>
+        <i id="calc-settings-target" class="fa fa-cog" ng-click="modifySettings($event)"></i>
+    </div>
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Main -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <div id="calc-visualizer-main">
+        
+        <div id="calc-visualizer-graph">
+            <div id="calc-visualizer-graph-container">
+                <div class="controls">
+                    <input name="id" type="text" class="form-control" ng-model="id" ng-change="refresh(true)" placeholder="Id" ng-maxlength="32">
+                </div>
+                <svg ng-hide="error"></svg>
+            </div>
+        </div>
+
+        <div id="calc-visualizer-details" ng-if="view === 'details'">
+            <div class="details-content" ng-show="selected">
+                <h3>{{ selected.type }}<small id="details-content-id" ng-show="selected.id">
+                    <span>({{ selected.id }})<span>
+                    <button type="button" ng-click="inspect(selected.id)" ng-disabled="selected.id === id"><i class="fa fa-external-link"></i></button>
+                </small></h3>
+                <div id="details-content-status" ng-show="selected.type !== 'posted' && selected.type !== 'value'">
+                    <h4>Status</h4>
+                    <div ui-ace="{
+                     mode: 'json',
+                     onLoad: aceLoaded
+                     }" ng-model="selected.status.body" readonly></div>
+                </div>
+                <div id="details-content-data" ng-show="selected.type === 'posted' || selected.type === 'value' || selected.status.type !== 'failed'">
+                    <h4>Data</h4>
+                    <div ng-show="selected.type !== 'posted' && selected.type !== 'value' && selected.status.type !== 'completed'"><i class="fa fa-spinner fa-spin"></i></div>
+                    <div ng-show="selected.type === 'posted' || selected.type === 'value' || selected.status.type === 'completed'">
+                        <div ng-show="selected.type === 'value'">
+                            <div ui-ace="{
+                             mode: 'json',
+                             onLoad: aceLoaded
+                             }" ng-model="selected.value" readonly></div>
+                         </div>
+                         <div ng-show="selected.type === 'posted' || selected.status.type === 'completed'">
+                            <span ng-hide="selected.data.size <= 5000000">Size exceeds allowable limit to show as JSON.</span>
+                            <div ui-ace="{
+                             mode: 'json',
+                             onLoad: aceLoaded
+                             }" ng-show="selected.data.size <= 5000000" ng-model="selected.data.body" readonly></div>
+                         </div>
+                        <button ng-click="download('json')" ng-disabled="selected.data.size > 5000000"><i class="fa fa-download"></i> JSON</button>
+                        <button ng-click="download('octet-stream')"><i class="fa fa-download"></i> Binary</button>
+                    </div>
+                </div>
+                <div id="details-content-request" ng-show="selected.type !== 'posted' && selected.type !== 'value'">
+                    <h4>Request</h4>
+                    <div ui-ace="{
+                     mode: 'json',
+                     onLoad: aceLoaded
+                     }" ng-model="selected.request" readonly></div>
+                    <button ng-click="downloadRequest()"><i class="fa fa-download"></i> JSON</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="calc-visualizer-search" ng-if="view === 'search'">
+            <div class="details-content">
+                <div class="calc-vis-search-header">
+                    <h3>Search</h3>
+                    <i class="fa fa-times close" ng-click="show('details')"></i>
+                </div>
+                <md-tabs md-selected="selectedSearchTab">
+                    <md-tab label="Request" md-on-select="storage.set('selectedSearchTab',0)">
+                        <div class="search-params">
+                            <input name="search" type="text" class="form-control" ng-model="searchRequest" ng-change="storage.set('searchRequest',searchRequest)" ng-model-options="{'debounce': 250}">
+                            <p>Search across the contents of the JSON request bodies.</p>
+                        </div>
+                        <div class="search-results">
+                            <div class="search-result" ng-repeat="req in requests | request:searchRequest">
+                                <div><span class="search-result-id">{{req.id}}</span> <span class="search-result-type">{{req.type}}</span></div>
+                                <div><span class="search-result-occurrences">{{req.occurrences}} occurrence(s)</span></div>
+                                <div class="search-result-buttons">
+                                    <button type="button" ng-click="reveal(req.id)"><i class="fa fa-eye"></i></button>
+                                    <button type="button" ng-click="inspect(req.id)" ng-disabled="req.id === id"><i class="fa fa-external-link"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </md-tab>
+                    <md-tab label="Result" md-on-select="storage.set('selectedSearchTab',1)">
+                        <div class="search-params">
+                            <input name="search" type="text" class="form-control" ng-model="searchResult" ng-change="storage.set('searchResult',searchResult)">
+                            <p>Use <code>type:term</code> to search for results of a particular type or <code>size:&lt;#</code> to search for results less than a particular size or <code>size:&gt;#</code> to search for results greater than a particular size. Separate search parameters with a space.</p>
+                        </div>
+                        <div class="search-results">
+                            <div class="search-result" ng-repeat="res in results | result:searchResult">
+                                <div><span class="search-result-id">{{res.id}}</span> <span class="search-result-type">{{res.type}}</span></div>
+                                <div><span class="search-result-type">Type: {{res.data.type}}</div>
+                                <div><span class="search-result-size">Size: {{res.data.size}}</div>
+                                <div class="search-result-buttons">
+                                    <button type="button" ng-click="reveal(res.id)"><i class="fa fa-eye"></i></button>
+                                    <button type="button" ng-click="inspect(res.id)" ng-disabled="res.id === id"><i class="fa fa-external-link"></i></button>
+                                </div>
+                            </div>
+                        </div>
+                    </md-tab>
+                </md-tabs>
+            </div>
+        </div>
+
+    </div>
+    <!-- -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <!-- Calc Settings modal -->
+    <!-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ -->
+    <script type="text/ng-template" id="calcSettings.tmpl.html">
+        <div class="modal-content records-modal">
+            <div class="modal-header">
+                Settings
+            </div>
+            <div class="modal-body context-body">
+                <form name="settingsForm">
+                    <div id="form-context" class="form-group has-feedback" ng-class="{'has-error': hasError(settingsForm, 'context')}">
+                        <div>
+                            <label>Context</label>
+                            <input name="context" type="text" class="form-control" ng-model="context" ng-change="refresh(true)" placeholder="Add Context" ng-maxlength="32" required>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <div class="spacer"></div>
+                <button type="button" class="close" ng-click="close()">Close</button>
+            </div>
+        </div>
+    </script>
+</div>

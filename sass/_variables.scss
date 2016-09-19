@@ -15,6 +15,16 @@ $offwhite: #f1f3f3;
 
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+// calculation status colors
+
+$completed: #4fb695;
+$failed: #a4565a;
+$calculating: #73acc9;
+$uploading: #73acc9;
+$ready: #b39062;
+
+
+// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // global colors
 
 $blue-drk: #045a7c;
@@ -30,6 +40,7 @@ $orange: #e67d17;
 $portnav: #b2bbbf;
 $silver: #b2bbbf;
 $silver-light: #9da0a3;
+$silver-lighter: #d8d9da;
 $tan: #d9d9d6;
 $tanner: #63635e;
 $table-bdr: #e6eaec;
