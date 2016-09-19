@@ -13,6 +13,15 @@
     function calcController($scope, session, $http, $q, $rootScope, $window, $mdDialog) {
 
         // --------------------------------------------------
+        // Local requires
+
+        var d3 = require('d3');
+        var fs = require('fs');
+        var request = require('request');
+        var remote = require('remote');
+        var dialog = remote.require('dialog');
+
+        // --------------------------------------------------
         // Local variables
 
         var deregisterInit;
@@ -24,7 +33,7 @@
         var memcache = {};
 
         var margin = {
-            top: 20,
+            top: 10,
             right: 120,
             bottom: 20,
             left: 120
@@ -36,23 +45,21 @@
             .attr("height", computedHeight)
             .attr("width", computedWidth)
             .append("g")
-            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+            .attr("transform", "translate(" + margin.left + ",0)");
 
         var tree = d3.tree()
-            .size([computedHeight, computedWidth]);
-
-        // --------------------------------------------------
-        // Local requires
-
-        var fs = require('fs');
-        var request = require('request');
-        var remote = require('remote');
-        var dialog = remote.require('dialog');
+            .size([computedWidth, computedHeight]);
 
         var init = function() {
             deregisterInit();
             $scope.context = $scope.storage.get('context');
             $scope.id = $scope.storage.get('id');
+            $scope.searchRequest = $scope.storage.get('searchRequest');
+            $scope.searchResult = $scope.storage.get('searchResult');
+            $scope.view = $scope.storage.get('calcView');
+            $scope.searchHistory = $scope.storage.get('searchHistory') || [];
+            var selected = $scope.storage.get('selectedSearchTab');
+            $scope.selectedSearchTab = (typeof selected === "number") ? selected : 0;
             $scope.refresh();
         };
 
@@ -198,7 +205,46 @@
             if (d.selected) {
                 cls += " selected";
             }
+            if (d.highlight) {
+                cls += " highlight";
+            }
             return cls;
+        }
+
+        /**
+         * @summary Computes the text label for the given node.
+         *
+         * @param {object} d - The node to be labelled.
+         * @returns {string} A string that labels the node.
+         */
+        function nodeText(d) {
+            var data, label = "";
+            // Label with respect to parent.
+            if (d.parent) {
+                data = d.parent.data;
+                if (data.type === "function") {
+                    label += "f(x):";
+                } else if (data.type === "posted") {
+                    label += "{}";
+                } else {
+                    label += data.type + ":";
+                }
+                data = d.data;
+                label += data.ptype + " > ";
+            }
+            // Label with respect to self
+            data = d.data;
+            if (data.type === "function") {
+                label += "f(x)";
+            } else if (data.type === "posted") {
+                label += "{}";
+            } else {
+                label += data.type;
+            }
+            if (data.status && data.status.type === "calculating") {
+                label += " (" + (data.status.data.calculating.progress * 100).toFixed(2) + "%)";
+            }
+            return label;
         }
 
         /** 
@@ -265,10 +311,10 @@
         function resolveImmutable(id) {
             var key = $scope.context + "-" + id;
             if (typeof memcache[key] !== "undefined") {
-                return $q.resolve(memcache[key]);
+                return memcache[key];
             } else {
-                memcache[key] = {};
-                return $http({
+                var data = {};
+                return (memcache[key] = $http({
                     method: "GET",
                     url: session.url("/iss/:id/immutable", {
                         "id": id
@@ -280,7 +326,7 @@
                     }
                 }).then(function(res) {
                     if (res.status === 200) {
-                        memcache[key].immutable = res.data.id;
+                        data.immutable = res.data.id;
                     } else if (res.status === 202) {
                         return $q.reject(new Error("Incomplete calculation for id: " + id));
                     } else if (res.status === 204) {
@@ -299,10 +345,39 @@
                         }
                     });
                 }).then(function(res) {
-                    memcache[key].type = res.headers("Thinknode-Type");
-                    return memcache[key];
-                });
+                    data.type = res.headers("Thinknode-Type");
+                    return data;
+                }));
             }
+        }
+
+        /**
+         * @summary Highlights matching nodes and opens it's ancestors.
+         *
+         * @param {object} node - A d3 node.
+         * @param {string} id - An id of a calculation to reveal (highlight).
+         */
+        function reveal(node, id) {
+            if (node.data.id === id) {
+                node.highlight = true;
+                return true;
+            }
+            var i, res = false;
+            if (node.children) {
+                for (i = 0; i < node.children.length; ++i) {
+                    res = res || reveal(node.children[i], id);
+                }
+            } else if (node._children) {
+                for (i = 0; i < node._children.length; ++i) {
+                    if (reveal(node._children[i], id)) {
+                        res = true;
+                    }
+                }
+                if (res) {
+                    toggle(node);
+                }
+            }
+            return res;
         }
 
         /**
@@ -316,6 +391,18 @@
                 var service = getService(data.reference);
                 if (service === "calc") {
                     return getRequest(data.reference).then(function(request) {
+                        // Add to request array
+                        var type;
+                        for (var p in request) {
+                            type = p;
+                            break;
+                        }
+                        $scope.requests.push({
+                            id: data.reference,
+                            type: type,
+                            request: JSON.stringify(request)
+                        });
+
                         var collection = [];
                         // Add common properties
                         obj.id = data.reference;
@@ -403,6 +490,11 @@
                             if (obj.status.type === "completed") {
                                 return getObject(data.reference).then(function(data) {
                                     obj.data = data;
+                                    $scope.results.push({
+                                        id: obj.id,
+                                        data: obj.data,
+                                        type: obj.type
+                                    });
                                 });
                             }
                         });
@@ -412,6 +504,11 @@
                     obj.id = data.reference;
                     return getObject(data.reference).then(function(data) {
                         obj.data = data;
+                        $scope.results.push({
+                            id: obj.id,
+                            data: obj.data,
+                            type: obj.type
+                        });
                     });
                 } else {
                     $scope.error = "Invalid id: " + data.reference;
@@ -448,25 +545,43 @@
          */
         function update(source) {
             var maxDepth = 0;
+            var maxX = 0;
 
-            // Compute the new tree layout
-            var nodes = tree(root).descendants();
-            var links = nodes.slice(1);
-
-            // Normalize for fixed-depth.
-            nodes.forEach(function(d) {
+            // Compute maximum depth
+            tree(root).descendants().forEach(function(d) {
                 if (d.depth > maxDepth) {
                     maxDepth = d.depth;
                 }
-                d.y = d.depth * 180;
             });
 
             // Update height and width
             var computedHeight = container.node().getBoundingClientRect().height;
             var computedWidth = container.node().getBoundingClientRect().width;
-            computedWidth = Math.max(computedWidth, maxDepth * 180);
+            computedWidth = Math.max(computedWidth, 240 + maxDepth * 180);
+            if (typeof source.x0 === "undefined" || typeof source.y0 === "undefined") {
+                source.x0 = computedHeight / 2;
+                source.y0 = 0;
+            }
             d3.selectAll("svg").attr("height", computedHeight).attr("width", computedWidth);
-            tree.size([computedHeight, computedWidth]);
+            tree.size([computedWidth, computedHeight]);
+
+            // Compute maximum x.
+            tree(root).descendants().forEach(function(d) {
+                if (d.x > maxX) {
+                    maxX = d.x;
+                }
+            });
+
+            // Compute the new tree layout
+            var nodes = tree(root).descendants();
+            var links = nodes.slice(1);
+
+            // Normalize y for fixed-depth.
+            // Normalize x against contant height.
+            nodes.forEach(function(d) {
+                d.y = d.depth * 180;
+                d.x = (d.x / maxX) * (computedHeight - margin.top - margin.bottom);
+            });
 
             // Update the nodes...
             var node = svg.selectAll("g.node")
@@ -499,7 +614,14 @@
                 });
 
             nodeEnter.append("circle")
+                .attr("class", "main")
                 .attr("r", "1e-6");
+
+            nodeEnter.append("circle")
+                .attr("class", "highlight")
+                .attr("r", "1e-6")
+                .style("fill-opacity", 0)
+                .style("stroke", "rgba(0, 0, 0, 0)");
 
             nodeEnter.append("text")
                 .attr("x", function(d) {
@@ -509,32 +631,7 @@
                 .attr("text-anchor", function(d) {
                     return d.children || d._children ? "end" : "start";
                 })
-                .text(function(d) {
-                    var data, label = "";
-                    // Label with respect to parent.
-                    if (d.parent) {
-                        data = d.parent.data;
-                        if (data.type === "function") {
-                            label += "f(x):";
-                        } else if (data.type === "posted") {
-                            label += "{}";
-                        } else {
-                            label += data.type;
-                        }
-                        data = d.data;
-                        label += data.ptype + " > ";
-                    }
-                    // Label with respect to self
-                    data = d.data;
-                    if (data.type === "function") {
-                        label += "f(x)";
-                    } else if (data.type === "posted") {
-                        label += "{}";
-                    } else {
-                        label += data.type;
-                    }
-                    return label;
-                })
+                .text(nodeText)
                 .style("fill-opacity", 1e-6);
 
             // Transition nodes to their new position.
@@ -545,8 +642,26 @@
                     return "translate(" + d.y + "," + d.x + ")";
                 });
 
-            nodeUpdate.select("circle")
+            nodeUpdate.select("circle.main")
                 .attr("r", 4.5);
+
+            nodeUpdate.select("circle.highlight")
+                .attr("r", 9)
+                .style("fill-opacity", 0)
+                .style("stroke", function(d) {
+                    if (d.highlight) {
+                        return "rgba(126, 129, 129, 0.5";
+                    } else {
+                        return "rgba(0, 0, 0, 0)";
+                    }
+                })
+                .style("stroke-width", function(d) {
+                    if (d.highlight) {
+                        return "8px";
+                    } else {
+                        return "0px";
+                    }
+                });
 
             nodeUpdate.select("text")
                 .style("fill-opacity", 1);
@@ -567,7 +682,10 @@
                 d.selected = false;
             });
 
-            nodeExit.select("circle")
+            nodeExit.select("circle.main")
+                .attr("r", 1e-6);
+
+            nodeExit.select("circle.highlight")
                 .attr("r", 1e-6);
 
             nodeExit.select("text")
@@ -671,7 +789,7 @@
                     "timeout": 180
                 });
             } else if (obj.status.type === "calculating") {
-                progress = obj.status.body.calculating.progress + 0.01;
+                var progress = obj.status.data.calculating.progress + 0.01;
                 if (progress >= 1) {
                     params.url = session.url("/calc/:id/status", {
                         "id": id
@@ -699,12 +817,22 @@
                     "status": "completed",
                     "timeout": 180
                 });
+            } else { // if (obj.status.type === "completed" || obj.status.type === "failed")
+                params.url = session.url("/calc/:id/status", {
+                    "id": id
+                }, {
+                    "context": $scope.context,
+                    "status": "queued",
+                    "queued": "pending",
+                    "timeout": 180
+                });
             }
             return $http(params).then(function(res) {
                 var data = res.data;
                 if (!obj.status) {
                     obj.status = {};
                 }
+                obj.status.data = data;
                 obj.status.body = JSON.stringify(data, null, 4);
                 if (data.queued === "pending") {
                     obj.status.type = "pending";
@@ -728,6 +856,8 @@
             }).then(function(retry) {
                 // Update classes
                 svg.selectAll("g.node").attr("class", nodeClass);
+                // Update labels
+                svg.selectAll("g.node text").text(nodeText);
                 if (retry) {
                     return watchStatus(id, obj);
                 }
@@ -741,6 +871,10 @@
         $scope.id = null;
         $scope.bucket = null;
         $scope.selected = null;
+        $scope.loading = false;
+        $scope.view = 'details';
+        $scope.requests = [];
+        $scope.results = [];
 
         // --------------------------------------------------
         // Scope methods
@@ -855,6 +989,9 @@
                 return (refreshPromise = $q.resolve());
             }
             $scope.storage.set('id', $scope.id);
+            $scope.requests.length = 0;
+            $scope.results.length = 0;
+            $scope.loading = true;
             // Return if the context or id is invalid.
             return (refreshPromise = inspectContext().then(function(info) {
                 if (info.bucket !== "#ref") {
@@ -869,10 +1006,63 @@
                     d.id = ++i;
                 });
                 root.children.forEach(collapse);
-                root.x0 = computedHeight / 2;
-                root.y0 = 0;
+                $scope.loading = false;
                 update(root);
+            }).catch(function(res) {
+                $scope.selected = null;
+                $scope.view = 'details';
+                if (res.data && res.data.message) {
+                    $scope.error = res.data.message;
+                } else {
+                    $scope.error = "An unexpected error occurred.";
+                }
             }));
+        };
+
+        /**
+         * @summary Inspects the calculation given its id.
+         *
+         * @param {string} id - The id of the calculation.
+         */
+        $scope.inspect = function(id) {
+            $scope.searchHistory.push($scope.id);
+            $scope.storage.set('searchHistory', $scope.searchHistory);
+            $scope.id = id;
+            $scope.storage.set('id', $scope.id);
+            $scope.refresh(true);
+        };
+
+        /**
+         * @summary Highlights the nodes matching the calculation given by its id.
+         *
+         * @param {string} id - The id of the calculation.
+         */
+        $scope.reveal = function(id) {
+            root.each(function(d) {
+                d.highlight = false;
+            });
+            reveal(root, id);
+            update(root);
+        };
+
+        /**
+         * @summary Allows the right sidebar to be toggleable between details and search views.
+         *
+         * @param {string} view - The name of the view. Either 'details' or 'search'.
+         */
+        $scope.show = function(view) {
+            $scope.view = view;
+            $scope.storage.set("calcView", view);
+        };
+
+        /**
+         * @summary Switches to the previously selected id.
+         */
+        $scope.undo = function() {
+            $scope.id = $scope.searchHistory.pop();
+            $scope.storage.set('id', $scope.id);
+            $scope.storage.set('searchHistory', $scope.searchHistory);
+            $scope.refresh(true);
         };
 
         // --------------------------------------------------
@@ -891,6 +1081,103 @@
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    // Filters
+
+    function occurrences(str, substring) {
+        if (substring.length === 0) return substring.length + 1;
+
+        var n = 0,
+            pos = 0,
+            step = substring.length;
+
+        while (true) {
+            pos = str.indexOf(substring, pos);
+            if (pos >= 0) {
+                ++n;
+                pos += step;
+            } else break;
+        }
+        return n;
+    }
+
+    function requestFilter() {
+        return function(input, filter) {
+            if (typeof filter !== "string" || filter === "") {
+                return [];
+            }
+            filter = filter.toLowerCase();
+            var out = [];
+            angular.forEach(input, function(item) {
+                var str = item.request.toLowerCase();
+                if (str.indexOf(filter) > -1) {
+                    item.occurrences = occurrences(str, filter);
+                    out.push(item);
+                }
+            });
+            return out;
+        };
+    }
+
+    function parseFilter(filter) {
+        var filterObj = {};
+
+        // Separate space delimited parts
+        var parts = filter.split(" ");
+
+        // For each part determine parameter type
+        var part, num;
+        for (var i = 0; i < parts.length; ++i) {
+            part = parts[i];
+            if (part.indexOf("type:") === 0) {
+                filterObj.type = part.substring(5);
+            }
+            if (part.indexOf("size:>") === 0) {
+                num = Number.parseInt(part.substring(6));
+                if (!Number.isNaN(num)) {
+                    filterObj.lower = num;
+                }
+            }
+            if (part.indexOf("size:<") === 0) {
+                num = Number.parseInt(part.substring(6));
+                if (!Number.isNaN(num)) {
+                    filterObj.upper = num;
+                }
+            }
+        }
+
+        return filterObj;
+    }
+
+    function resultFilter() {
+        return function(input, filter) {
+            if (typeof filter !== "string" || filter === "") {
+                return [];
+            }
+            var parsed = parseFilter(filter.toLowerCase());
+            if (Object.keys(parsed).length === 0) {
+                return [];
+            }
+            var out = [];
+            angular.forEach(input, function(item) {
+                if (!item.data.type || item.data.size) {
+                    return;
+                }
+                if (typeof parsed.type === "string" && item.data.type.indexOf(parsed.type) < 0) {
+                    return;
+                }
+                if (typeof parsed.lower === "number" && item.data.size <= parsed.lower) {
+                    return;
+                }
+                if (typeof parsed.upper === "number" && item.data.size >= parsed.upper) {
+                    return;
+                }
+                out.push(item);
+            });
+            return out;
+        };
+    }
+
+    // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Register controller
 
     angular.module('app').controller('calcController', [
@@ -902,5 +1189,5 @@
         '$window',
         '$mdDialog',
         calcController
-    ]);
+    ]).filter('request', requestFilter).filter('result', resultFilter);
 })();
