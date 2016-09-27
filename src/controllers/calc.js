@@ -1040,6 +1040,8 @@
             $scope.storage.set('id', $scope.id);
             $scope.requests.length = 0;
             $scope.results.length = 0;
+            $scope.loaded = 0;
+            $scope.total = 0;
             $scope.loading = true;
             // Return if the context or id is invalid.
             return (refreshPromise = inspectContext().then(function(info) {
