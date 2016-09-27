@@ -20,8 +20,12 @@ function Config(app) {
             fs.ensureDirSync(this.savePath);
             return {};
         }
-        var buff = fs.readFileSync(this.savePath + this.filename);
-        return JSON.parse(buff.toString('utf-8'));
+        var buf = fs.readFileSync(this.savePath + this.filename);
+        if (buf.length === 0) {
+            return {};
+        } else {
+            return JSON.parse(buf);
+        }
     };
 
     this.setConfig = function(property, value) {

@@ -15,7 +15,7 @@
         padding: 10px;
         width: 100%;
 
-        .title, .header-error {
+        .title, .header-error, .header-note {
             display: block;
             color: #7e8181;
             font-family: 'Gotham-Book', arial, sans-serif;
@@ -24,6 +24,10 @@
 
         .header-error {
             color: $error-red;
+            margin-right: 10px;
+        }
+
+        .header-note {
             margin-right: 10px;
         }
 
