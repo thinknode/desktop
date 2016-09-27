@@ -15,6 +15,8 @@
         // --------------------------------------------------
         // Local requires
 
+        var _ = require('lodash');
+        var async = require('async');
         var d3 = require('d3');
         var fs = require('fs');
         var request = require('request');
@@ -24,6 +26,7 @@
         // --------------------------------------------------
         // Local variables
 
+        var MAX_IMMUTABLE_SIZE = 5000;
         var deregisterInit;
         var refreshPromise;
         var root;
@@ -49,6 +52,19 @@
 
         var tree = d3.tree()
             .size([computedWidth, computedHeight]);
+
+        /**
+         * @summary Queue for getting object data.
+         * @description
+         * The queue worker will get the data for the object id and then attach the data to the
+         * given object. Only 4 operations are permitted to run at any given time.
+         */
+        var getQueue = async.queue(function(task, callback) {
+            getObject(task.id).then(function(data) {
+                task.data = data;
+                callback();
+            });
+        }, 4);
 
         var init = function() {
             deregisterInit();
@@ -170,6 +186,25 @@
             }
         }
 
+        /**
+         * @summary Gets the calculation status for the given id.
+         *
+         * @param {string} id - The id of a calculation.
+         * @param {object} params - The parameters of the http request.
+         * @returns {object} The status.
+         */
+        function getStatus(id, params) {
+            var key = $scope.context + "-" + id + "-status";
+            if (typeof memcache[key] !== "undefined") {
+                return memcache[key];
+            } else {
+                return (memcache[key] = $http(params).then(function(res) {
+                    delete memcache[key];
+                    return res;
+                }));
+            }
+        }
+
         /** 
          * @summary Inspects the current context.
          *
@@ -274,7 +309,7 @@
                     memcache[key] = {
                         "size": parseInt(res.headers("Thinknode-Size"))
                     };
-                    if (memcache[key].size <= 5000000) {
+                    if (memcache[key].size <= MAX_IMMUTABLE_SIZE) {
                         return $http({
                             method: "GET",
                             url: session.url("/iss/immutable/:id", {
@@ -355,29 +390,20 @@
          * @summary Highlights matching nodes and opens it's ancestors.
          *
          * @param {object} node - A d3 node.
-         * @param {string} id - An id of a calculation to reveal (highlight).
+         * @param {integer[]} path - A path to a calculation to reveal (highlight).
          */
-        function reveal(node, id) {
-            if (node.data.id === id) {
+        function reveal(node, path) {
+            var index;
+            if (path.length === 0) {
                 node.highlight = true;
-                return true;
+            } else if (node.children) {
+                index = path.shift();
+                reveal(node.children[index], path);
+            } else { // if (node._children)
+                index = path.shift();
+                reveal(node._children[index], path);
+                toggle(node);
             }
-            var i, res = false;
-            if (node.children) {
-                for (i = 0; i < node.children.length; ++i) {
-                    res = res || reveal(node.children[i], id);
-                }
-            } else if (node._children) {
-                for (i = 0; i < node._children.length; ++i) {
-                    if (reveal(node._children[i], id)) {
-                        res = true;
-                    }
-                }
-                if (res) {
-                    toggle(node);
-                }
-            }
-            return res;
         }
 
         /**
@@ -385,12 +411,18 @@
          *
          * @param {object} data - The data to use to contruct the node.
          * @param {object} obj - The node info object.
+         * @param {integer[]} [path] - The path to the object.
          */
-        function spawn(data, obj) {
+        function spawn(data, obj, path) {
+            if (!path) {
+                path = [];
+            }
             if (typeof data.reference !== "undefined") {
                 var service = getService(data.reference);
                 if (service === "calc") {
+                    $scope.total++;
                     return getRequest(data.reference).then(function(request) {
+                        $scope.loaded++;
                         // Add to request array
                         var type;
                         for (var p in request) {
@@ -400,6 +432,7 @@
                         $scope.requests.push({
                             id: data.reference,
                             type: type,
+                            path: path,
                             request: JSON.stringify(request)
                         });
 
@@ -410,14 +443,16 @@
                         obj.children = [];
 
                         // Add children based on type
-                        var i, new_data;
+                        var i, new_data, new_path;
                         if (typeof request.array !== "undefined") {
                             obj.type = "array";
                             for (i = 0; i < request.array.items.length; ++i) {
                                 new_data = {
                                     ptype: "[" + i + "]"
                                 };
-                                collection.push(spawn(request.array.items[i], new_data));
+                                new_path = _.cloneDeep(path);
+                                new_path.push(obj.children.length);
+                                collection.push(spawn(request.array.items[i], new_data, new_path));
                                 obj.children.push(new_data);
                             }
                         } else if (typeof request.cast !== "undefined") {
@@ -425,7 +460,9 @@
                             new_data = {
                                 ptype: "object"
                             };
-                            collection.push(spawn(request.cast.object, new_data));
+                            new_path = _.cloneDeep(path);
+                            new_path.push(obj.children.length);
+                            collection.push(spawn(request.cast.object, new_data, new_path));
                             obj.children.push(new_data);
                         } else if (typeof request.function !== "undefined") {
                             obj.type = "function";
@@ -433,7 +470,9 @@
                                 new_data = {
                                     ptype: "arg" + i
                                 };
-                                collection.push(spawn(request.function.args[i], new_data));
+                                new_path = _.cloneDeep(path);
+                                new_path.push(obj.children.length);
+                                collection.push(spawn(request.function.args[i], new_data, new_path));
                                 obj.children.push(new_data);
                             }
                         } else if (typeof request.item !== "undefined") {
@@ -441,26 +480,34 @@
                             new_data = {
                                 ptype: "array"
                             };
-                            collection.push(spawn(request.item.array, new_data));
+                            new_path = _.cloneDeep(path);
+                            new_path.push(obj.children.length);
+                            collection.push(spawn(request.item.array, new_data, new_path));
                             obj.children.push(new_data);
                             new_data = {
                                 ptype: "index"
                             };
-                            collection.push(spawn(request.item.index, new_data));
+                            new_path = _.cloneDeep(path);
+                            new_path.push(obj.children.length);
+                            collection.push(spawn(request.item.index, new_data, new_path));
                             obj.children.push(new_data);
                         } else if (typeof request.meta !== "undefined") {
                             obj.type = "meta";
                             new_data = {
                                 ptype: "generator"
                             };
-                            collection.push(spawn(request.meta.generator, new_data));
+                            new_path = _.cloneDeep(path);
+                            new_path.push(obj.children.length);
+                            collection.push(spawn(request.meta.generator, new_data, new_path));
                             obj.children.push(new_data);
                         } else if (typeof request.mutate !== "undefined") {
                             obj.type = "mutate";
                             new_data = {
                                 ptype: "object"
                             };
-                            collection.push(spawn(request.mutate.object, new_data));
+                            new_path = _.cloneDeep(path);
+                            new_path.push(obj.children.length);
+                            collection.push(spawn(request.mutate.object, new_data, new_path));
                             obj.children.push(new_data);
                         } else if (typeof request.object !== "undefined") {
                             obj.type = "object";
@@ -468,7 +515,9 @@
                                 new_data = {
                                     ptype: "[" + JSON.stringify(i) + "]"
                                 };
-                                collection.push(spawn(request.object.properties[i], new_data));
+                                new_path = _.cloneDeep(path);
+                                new_path.push(obj.children.length);
+                                collection.push(spawn(request.object.properties[i], new_data, new_path));
                                 obj.children.push(new_data);
                             }
                         } else if (typeof request.property !== "undefined") {
@@ -476,24 +525,28 @@
                             new_data = {
                                 ptype: "object"
                             };
-                            collection.push(spawn(request.property.object, new_data));
+                            new_path = _.cloneDeep(path);
+                            new_path.push(obj.children.length);
+                            collection.push(spawn(request.property.object, new_data, new_path));
                             obj.children.push(new_data);
                             new_data = {
                                 ptype: "field"
                             };
-                            collection.push(spawn(request.property.field, new_data));
+                            new_path = _.cloneDeep(path);
+                            new_path.push(obj.children.length);
+                            collection.push(spawn(request.property.field, new_data, new_path));
                             obj.children.push(new_data);
                         }
                         return $q.all(collection);
                     }).then(function() {
                         watchStatus(data.reference, obj).then(function() {
                             if (obj.status.type === "completed") {
-                                return getObject(data.reference).then(function(data) {
-                                    obj.data = data;
+                                getQueue.push(obj, function() {
                                     $scope.results.push({
                                         id: obj.id,
                                         data: obj.data,
-                                        type: obj.type
+                                        type: obj.type,
+                                        path: path
                                     });
                                 });
                             }
@@ -502,14 +555,7 @@
                 } else if (service === "iss") {
                     obj.type = "posted";
                     obj.id = data.reference;
-                    return getObject(data.reference).then(function(data) {
-                        obj.data = data;
-                        $scope.results.push({
-                            id: obj.id,
-                            data: obj.data,
-                            type: obj.type
-                        });
-                    });
+                    getQueue.push(obj);
                 } else {
                     $scope.error = "Invalid id: " + data.reference;
                     throw new Error("Invalid id: " + data.reference);
@@ -827,7 +873,7 @@
                     "timeout": 180
                 });
             }
-            return $http(params).then(function(res) {
+            return getStatus(id, params).then(function(res) {
                 var data = res.data;
                 if (!obj.status) {
                     obj.status = {};
@@ -875,6 +921,9 @@
         $scope.view = 'details';
         $scope.requests = [];
         $scope.results = [];
+        $scope.loaded = 0;
+        $scope.total = 0;
+        $scope.max_immutable_size = MAX_IMMUTABLE_SIZE;
 
         // --------------------------------------------------
         // Scope methods
@@ -1035,13 +1084,13 @@
         /**
          * @summary Highlights the nodes matching the calculation given by its id.
          *
-         * @param {string} id - The id of the calculation.
+         * @param {number[]} path - The path to the calculation.
          */
-        $scope.reveal = function(id) {
+        $scope.reveal = function(path) {
             root.each(function(d) {
                 d.highlight = false;
             });
-            reveal(root, id);
+            reveal(root, path);
             update(root);
         };
 

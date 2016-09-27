@@ -7,6 +7,7 @@
         <span class="title">Calculation Explorer<span ng-show="bucket"> - {{ bucket }}</span></span>
         <div class="spacer"></div>
         <span class="header-error" ng-show="error">{{ error }}</span>
+        <span class="header-note" ng-show="loaded != total">Loaded {{ loaded }} of {{ total }}</span>
         <i class="fa fa-spinner fa-spin" ng-show="loading"></i>
         <i class="fa fa-arrow-left" ng-click="undo()" ng-show="searchHistory.length > 0"></i>
         <i class="fa fa-search" ng-click="show('search')" ng-show="id.length === 32"></i>
@@ -51,13 +52,13 @@
                              }" ng-model="selected.value" readonly></div>
                          </div>
                          <div ng-show="selected.type === 'posted' || selected.status.type === 'completed'">
-                            <span ng-hide="selected.data.size <= 5000000">Size exceeds allowable limit to show as JSON.</span>
+                            <span ng-hide="selected.data.size <= max_immutable_size">Size exceeds allowable limit to show as JSON.</span>
                             <div ui-ace="{
                              mode: 'json',
                              onLoad: aceLoaded
-                             }" ng-show="selected.data.size <= 5000000" ng-model="selected.data.body" readonly></div>
+                             }" ng-show="selected.data.size <= max_immutable_size" ng-model="selected.data.body" readonly></div>
                          </div>
-                        <button ng-click="download('json')" ng-disabled="selected.data.size > 5000000"><i class="fa fa-download"></i> JSON</button>
+                        <button ng-click="download('json')" ng-disabled="selected.data.size > max_immutable_size"><i class="fa fa-download"></i> JSON</button>
                         <button ng-click="download('octet-stream')"><i class="fa fa-download"></i> Binary</button>
                     </div>
                 </div>
@@ -89,7 +90,7 @@
                                 <div><span class="search-result-id">{{req.id}}</span> <span class="search-result-type">{{req.type}}</span></div>
                                 <div><span class="search-result-occurrences">{{req.occurrences}} occurrence(s)</span></div>
                                 <div class="search-result-buttons">
-                                    <button type="button" ng-click="reveal(req.id)"><i class="fa fa-eye"></i></button>
+                                    <button type="button" ng-click="reveal(req.path)"><i class="fa fa-eye"></i></button>
                                     <button type="button" ng-click="inspect(req.id)" ng-disabled="req.id === id"><i class="fa fa-external-link"></i></button>
                                 </div>
                             </div>
@@ -106,7 +107,7 @@
                                 <div><span class="search-result-type">Type: {{res.data.type}}</div>
                                 <div><span class="search-result-size">Size: {{res.data.size}}</div>
                                 <div class="search-result-buttons">
-                                    <button type="button" ng-click="reveal(res.id)"><i class="fa fa-eye"></i></button>
+                                    <button type="button" ng-click="reveal(res.path)"><i class="fa fa-eye"></i></button>
                                     <button type="button" ng-click="inspect(res.id)" ng-disabled="res.id === id"><i class="fa fa-external-link"></i></button>
                                 </div>
                             </div>
