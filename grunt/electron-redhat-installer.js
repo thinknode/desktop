@@ -12,7 +12,7 @@ module.exports = {
             name: "thinknode",
             productName: "Thinknode",
             genericName: "Thinknode",
-            version: "1.4.0",
+            version: "1.4.1",
             productDescription: "Desktop application for exploring and interacting with the Thinknode API",
             description: "Desktop application for exploring and interacting with the Thinknode API",
             bin: 'Thinknode',
