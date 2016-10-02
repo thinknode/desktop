@@ -53,10 +53,11 @@
                          </div>
                          <div ng-show="selected.type === 'posted' || selected.status.type === 'completed'">
                             <span ng-hide="selected.data.size <= max_immutable_size">Size exceeds allowable limit to show as JSON.</span>
+                            <button ng-show="selected.data.size <= max_immutable_size && !selected.data.body" ng-click="fetchData()" ng-disabled="fetching">Fetch JSON</button>
                             <div ui-ace="{
                              mode: 'json',
                              onLoad: aceLoaded
-                             }" ng-show="selected.data.size <= max_immutable_size" ng-model="selected.data.body" readonly></div>
+                             }" ng-show="selected.data.size <= max_immutable_size && selected.data.body" ng-model="selected.data.body" readonly></div>
                          </div>
                         <button ng-click="download('json')" ng-disabled="selected.data.size > max_immutable_size"><i class="fa fa-download"></i> JSON</button>
                         <button ng-click="download('octet-stream')"><i class="fa fa-download"></i> Binary</button>

@@ -108,6 +108,35 @@
                 " " + d.parent.y + "," + d.parent.x;
         }
 
+        /**
+         * @summary Fetches the JSON data for an immutable id.
+         *
+         * @param {string} immutable - An immutable id.
+         */
+        function fetch(immutable) {
+            var key = $scope.context + "-" + immutable + "-data";
+            if (memcache[key]) {
+                return memcache[key];
+            } else {
+                return (memcache[key] = $http({
+                    method: "GET",
+                    url: session.url("/iss/immutable/:id", {
+                        "id": immutable
+                    }, {
+                        "context": $scope.context
+                    }),
+                    headers: {
+                        "Authorization": "Bearer " + session.token(),
+                        "Accept": "application/json"
+                    }
+                }).then(function(res) {
+                    return res.data;
+                }, function(res) {
+                    return $q.reject(new Error(res.data.message));
+                }));
+            }
+        }
+
         /** 
          * @summary Given a reference id, retrieves the object.
          *
@@ -134,7 +163,7 @@
             if (typeof memcache[key] !== "undefined") {
                 return $q.resolve(memcache[key]);
             } else {
-                return $http({
+                return (memcache[key] = $http({
                     method: "GET",
                     url: session.url("/calc/:id/resolved", {
                         "id": id
@@ -146,9 +175,8 @@
                         "Accept": "application/json"
                     }
                 }).then(function(res) {
-                    memcache[key] = res.data;
-                    return memcache[key];
-                });
+                    return res.data;
+                }));
             }
         }
 
@@ -294,7 +322,7 @@
             if (typeof memcache[key] !== "undefined") {
                 return $q.resolve(memcache[key]);
             } else {
-                return $http({
+                return (memcache[key] = $http({
                     method: "HEAD",
                     url: session.url("/iss/immutable/:id", {
                         "id": immutable
@@ -306,33 +334,11 @@
                         "Accept": "application/json"
                     }
                 }).then(function(res) {
-                    memcache[key] = {
+                    return {
+                        "immutable": immutable,
                         "size": parseInt(res.headers("Thinknode-Size"))
                     };
-                    if (memcache[key].size <= MAX_IMMUTABLE_SIZE) {
-                        return $http({
-                            method: "GET",
-                            url: session.url("/iss/immutable/:id", {
-                                "id": immutable
-                            }, {
-                                "context": $scope.context
-                            }),
-                            headers: {
-                                "Authorization": "Bearer " + session.token(),
-                                "Accept": "application/json"
-                            }
-                        }).then(function(res) {
-                            if (res.status === 200) {
-                                memcache[key].body = JSON.stringify(res.data, null, 2);
-                                return memcache[key];
-                            }
-                        }, function(res) {
-                            return $q.reject(new Error(res.data.message));
-                        });
-                    } else {
-                        return memcache[key];
-                    }
-                });
+                }));
             }
         }
 
@@ -657,6 +663,8 @@
                         $scope.selected = d.data;
                         $scope.$apply();
                     }
+                }).on("contextmenu", function(d) {
+                    toggle(d);
                 });
 
             nodeEnter.append("circle")
@@ -986,6 +994,17 @@
                 return getRequest($scope.selected.id).then(function(req) {
                     fs.writeFileSync(filename, JSON.stringify(req));
                 });
+            });
+        };
+
+        /**
+         * @summary Fetches the JSON data for a selected node.
+         */
+        $scope.fetchData = function() {
+            $scope.fetching = true;
+            return fetch($scope.selected.data.immutable).then(function(body) {
+                $scope.selected.data.body = JSON.stringify(body, null, 2);
+                $scope.fetching = false;
             });
         };
 
