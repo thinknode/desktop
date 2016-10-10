@@ -10,7 +10,7 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Controller
 
-    function calcController($scope, session, $http, $q, $rootScope, $window, $mdDialog) {
+    function calcController($scope, session, $http, $q, $rootScope, $window, $timeout, $mdDialog) {
 
         // --------------------------------------------------
         // Local requires
@@ -89,6 +89,7 @@
                 for (var i = 0; i < ids.length; ++i) {
                     id = ids[i];
                     if (typeof memcache.raw_requests[id] === "undefined") {
+                        memcache.raw_requests[id] = true;
                         calcReferenceQueue.push({
                             "id": id,
                             "paths": _.find($scope.requests, "id", id).paths
@@ -98,7 +99,7 @@
                 }
                 callback();
             });
-        }, 1);
+        }, 4);
 
         // --------------------------------------------------
         // Local functions
@@ -129,8 +130,17 @@
             } else if (typeof request.function !== "undefined") {
                 obj.type = "function";
                 obj.children = [];
+                var account = request.function.account;
+                var app = request.function.app;
+                var name = request.function.name;
                 for (i = 0; i < request.function.args.length; ++i) {
-                    obj.children.push(constructNode(request.function.args[i], "arg" + i, 1));
+                    var arg;
+                    try {
+                        arg = appinfo[account][app].functions[name].schema.function_type.parameters[i].name;
+                    } catch (e) {
+                        arg = "arg" + i;
+                    }
+                    obj.children.push(constructNode(request.function.args[i], arg, 1));
                 }
             } else if (typeof request.item !== "undefined") {
                 obj.type = "item";
@@ -646,29 +656,32 @@
          */
         function nodeText(d) {
             var data, fcn, label = "";
-            // Label with respect to parent.
-            if (d.parent) {
-                data = d.parent.data;
+            data = d.data;
+            // If leaf node, label with respect to parent, then "self"
+            if (data.type === "reference" || data.type === "value") {
+                data = d.data;
+                label += data.ptype + " > ";
                 if (data.type === "function") {
                     fcn = memcache.raw_requests[data.id].function;
-                    label += fcn.account + "/" + fcn.app + "/" + fcn.name + "():";
+                    label += fcn.account + "/" + fcn.app + "/" + fcn.name + "()";
                 } else if (data.type === "reference") {
                     label += "{}";
                 } else {
-                    label += data.type + ":";
+                    label += data.type;
                 }
-                data = d.data;
-                label += data.ptype + " > ";
-            }
-            // Label with respect to self
-            data = d.data;
-            if (data.type === "function") {
-                fcn = memcache.raw_requests[data.id].function;
-                label += fcn.account + "/" + fcn.app + "/" + fcn.name + "()";
-            } else if (data.type === "reference") {
-                label += "{}";
+            } else if (d.children) {
+                // If open, label with respect to "self"
+                if (data.type === "function") {
+                    fcn = memcache.raw_requests[data.id].function;
+                    label += fcn.account + "/" + fcn.app + "/" + fcn.name + "()";
+                } else if (data.type === "reference") {
+                    label += "{}";
+                } else {
+                    label += data.type;
+                }
             } else {
-                label += data.type;
+                // If closed, label with respect to parent
+                label = d.data.ptype;
             }
             if (data.status && data.status.type === "calculating") {
                 label += " (" + (data.status.data.calculating.progress * 100).toFixed(2) + "%)";
@@ -812,6 +825,7 @@
                 });
             }
             update(d);
+            svg.selectAll("g.node text").text(nodeText);
         }
 
         /**
@@ -1346,6 +1360,10 @@
                 root.children.forEach(collapse);
                 $scope.loading = false;
                 update(root);
+            }).then(function() {
+                $timeout(function() {
+                    svg.selectAll("g.node").attr("class", nodeClass);
+                }, 1000);
             }).catch(function(res) {
                 $scope.selected = null;
                 $scope.view = 'details';
@@ -1376,6 +1394,7 @@
          * @param {number[]} path - The path to the calculation.
          */
         $scope.reveal = function(path) {
+            path = _.cloneDeep(path);
             root.each(function(d) {
                 d.highlight = false;
             });
@@ -1422,26 +1441,9 @@
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Filters
 
-    // function occurrences(str, substring) {
-    //     if (substring.length === 0) return substring.length + 1;
-
-    //     var n = 0,
-    //         pos = 0,
-    //         step = substring.length;
-
-    //     while (true) {
-    //         pos = str.indexOf(substring, pos);
-    //         if (pos >= 0) {
-    //             ++n;
-    //             pos += step;
-    //         } else break;
-    //     }
-    //     return n;
-    // }
-
     function requestFilter() {
         return function(input, filter) {
-            if (typeof filter !== "string" || filter === "") {
+            if (typeof filter !== "string" || filter.length < 3) {
                 return [];
             }
             filter = filter.toLowerCase();
@@ -1527,6 +1529,7 @@
         '$q',
         '$rootScope',
         '$window',
+        '$timeout',
         '$mdDialog',
         calcController
     ]).filter('request', requestFilter).filter('result', resultFilter);

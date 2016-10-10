@@ -83,7 +83,7 @@
                 <md-tabs md-selected="selectedSearchTab">
                     <md-tab label="Request" md-on-select="storage.set('selectedSearchTab',0)">
                         <div class="search-params">
-                            <input name="search" type="text" class="form-control" ng-model="searchRequest" ng-change="storage.set('searchRequest',searchRequest)" ng-model-options="{'debounce': 250}">
+                            <input name="search" type="text" class="form-control" ng-model="searchRequest" ng-change="storage.set('searchRequest',searchRequest)" ng-model-options="{'debounce': 500}">
                             <p>Search across the contents of the JSON request bodies.</p>
                         </div>
                         <div class="search-results">
@@ -91,13 +91,13 @@
                                 <div><span class="search-result-id">{{req.id}}</span> <span class="search-result-type">{{req.type}}</span></div>
                                 <div><span class="search-result-occurrences">{{req.paths.length}} instance(s)</span></div>
                                 <div class="search-result-buttons">
-                                    <button type="button" ng-click="inspect(req.id)" ng-disabled="req.id === id"><i class="fa fa-external-link"></i></button>
+                                    <button class="inspect" type="button" ng-click="inspect(req.id)" ng-disabled="req.id === id"><i class="fa fa-external-link"></i></button>
                                 </div>
-                                <ul>
-                                    <li ng-repeat="path in req.paths">
-                                        <span>Path {{$index}}</span>
+                                <ul class="search-result-paths">
+                                    <li ng-repeat="path in req.paths" class="flx">
                                         <div class="search-result-buttons">
                                             <button type="button" ng-click="reveal(path)"><i class="fa fa-eye"></i></button>
+                                            <span>Path {{$index + 1}}</span>
                                         </div>
                                     </li>
                                 </ul>
@@ -106,7 +106,7 @@
                     </md-tab>
                     <md-tab label="Result" md-on-select="storage.set('selectedSearchTab',1)">
                         <div class="search-params">
-                            <input name="search" type="text" class="form-control" ng-model="searchResult" ng-change="storage.set('searchResult',searchResult)">
+                            <input name="search" type="text" class="form-control" ng-model="searchResult" ng-change="storage.set('searchResult',searchResult)" ng-model-options="{'debounce': 500}">
                             <p>Use <code>type:term</code> to search for results of a particular type or <code>size:&lt;#</code> to search for results less than a particular size or <code>size:&gt;#</code> to search for results greater than a particular size. Separate search parameters with a space.</p>
                         </div>
                         <div class="search-results">
