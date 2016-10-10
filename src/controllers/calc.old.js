@@ -33,14 +33,7 @@
         var root_obj = {};
         var i = 0;
         var duration = 750;
-        var memcache = {
-            requests: {},
-            raw_requests: {},
-            immutables: {},
-            data: {},
-            statuses: {}
-        };
-        var appinfo = {};
+        var memcache = {};
 
         var margin = {
             top: 10,
@@ -60,132 +53,245 @@
         var tree = d3.tree()
             .size([computedWidth, computedHeight]);
 
+        /**
+         * @summary Queue for getting object data.
+         * @description
+         * The queue worker will get the data for the object id and then attach the data to the
+         * given object. Only 4 operations are permitted to run at any given time.
+         */
+        var getQueue = async.queue(function(task, callback) {
+            getObject(task.id).then(function(data) {
+                task.data = data;
+                callback();
+            });
+        }, 4);
+
+        /**
+         * @summary Queue for adding nodes to calculation tree.
+         * @description
+         * The queue worker will create the node based on the given definition, add any children to
+         * the node queue, and then mark itself as complete.
+         * info: {
+         *   "definition": <the calculation object definition>,
+         *   "node": <the node object to be used by d3>,
+         *   "[root]": <optional boolean indicating whether node is root node>
+         * }
+         */
+        var nodeQueue = async.queue(function(info, callback) {
+            var promise = $q.resolve();
+            var i, service, newNode;
+            var node = info.node;
+            var def = info.definition;
+            if (info.depth > $scope.max_depth) {
+                $scope.max_depth = info.depth;
+            }
+
+            // If the node is the root node, make sure the id is a calculation id.
+            if (info.root) {
+                service = getService(def.reference);
+                if (service !== "calc") {
+                    return callback(new Error("Invalid '" + service + "' id"));
+                }
+            }
+
+            // Initialize node based on definition
+            promise = promise.then(function() {
+                // Set type
+                for (var p in def) {
+                    node.type = p;
+                    break;
+                }
+                // Set children
+                node.children = [];
+            });
+
+            // Resolve node request if necessary
+            promise = promise.then(function() {
+                if (node.type === "reference") {
+                    node.id = def.reference;
+                    service = getService(def.reference);
+                    if (service === "calc") {
+                        return getRequest(def.reference);
+                    } else if (service === "iss") {
+                        return def;
+                    } else {
+                        // @todo: error
+                    }
+                } else {
+                    return def;
+                }
+            }).then(function(obj) {
+                node.resolved = obj;
+                // Resolve type again
+                for (var p in node.resolved) {
+                    node.type = p;
+                    break;
+                }
+            });
+
+            // Create child nodes
+            promise = promise.then(function() {
+                if (node.type === "array") {
+                    for (i = 0; i < node.resolved.array.items.length; ++i) {
+                        newNode = {
+                            ptype: "[" + i + "]"
+                        };
+                        node.children.push(newNode);
+                        nodeQueue.unshift({
+                            "definition": node.resolved.array.items[i],
+                            "node": newNode,
+                            "depth": info.depth + 1
+                        });
+                        $scope.total++;
+                    }
+                } else if (node.type === "cast") {
+                    newNode = {
+                        ptype: "object"
+                    };
+                    node.children.push(newNode);
+                    nodeQueue.unshift({
+                        "definition": node.resolved.cast.object,
+                        "node": newNode,
+                        "depth": info.depth + 1
+                    });
+                    $scope.total++;
+                } else if (node.type === "function") {
+                    for (i = 0; i < node.resolved.function.args.length; ++i) {
+                        newNode = {
+                            ptype: "arg" + i
+                        };
+                        node.children.push(newNode);
+                        nodeQueue.unshift({
+                            "definition": node.resolved.function.args[i],
+                            "node": newNode,
+                            "depth": info.depth + 1
+                        });
+                        $scope.total++;
+                    }
+                } else if (node.type === "item") {
+                    newNode = {
+                        ptype: "array"
+                    };
+                    node.children.push(newNode);
+                    nodeQueue.unshift({
+                        "definition": node.resolved.item.array,
+                        "node": newNode,
+                        "depth": info.depth + 1
+                    });
+                    $scope.total++;
+                    newNode = {
+                        ptype: "index"
+                    };
+                    node.children.push(newNode);
+                    nodeQueue.unshift({
+                        "definition": node.resolved.item.index,
+                        "node": newNode,
+                        "depth": info.depth + 1
+                    });
+                    $scope.total++;
+                } else if (node.type === "meta") {
+                    newNode = {
+                        ptype: "generator"
+                    };
+                    node.children.push(newNode);
+                    nodeQueue.unshift({
+                        "definition": node.resolved.meta.generator,
+                        "node": newNode,
+                        "depth": info.depth + 1
+                    });
+                    $scope.total++;
+                } else if (node.type === "mutate") {
+                    newNode = {
+                        ptype: "object"
+                    };
+                    node.children.push(newNode);
+                    nodeQueue.unshift({
+                        "definition": node.resolved.mutate.object,
+                        "node": newNode,
+                        "depth": info.depth + 1
+                    });
+                    $scope.total++;
+                } else if (node.type === "object") {
+                    for (i in node.resolved.object.properties) {
+                        newNode = {
+                            ptype: "[" + JSON.stringify(i) + "]"
+                        };
+                        node.children.push(newNode);
+                        nodeQueue.unshift({
+                            "definition": node.resolved.object.properties[i],
+                            "node": newNode,
+                            "depth": info.depth + 1
+                        });
+                        $scope.total++;
+                    }
+                } else if (node.type === "property") {
+                    newNode = {
+                        ptype: "object"
+                    };
+                    node.children.push(newNode);
+                    nodeQueue.unshift({
+                        "definition": node.resolved.property.object,
+                        "node": newNode,
+                        "depth": info.depth + 1
+                    });
+                    $scope.total++;
+                    newNode = {
+                        ptype: "field"
+                    };
+                    node.children.push(newNode);
+                    nodeQueue.unshift({
+                        "definition": node.resolved.property.field,
+                        "node": newNode,
+                        "depth": info.depth + 1
+                    });
+                    $scope.total++;
+                } else if (node.type === "reference") {
+                    getQueue.push(node);
+                } else if (node.type === "value") {
+                    node.value = JSON.stringify(def.value, null, "\t");
+                } else {
+                    // @todo: error
+                }
+            });
+
+            // Status checks
+            promise = promise.then(function() {
+                if (node.type === "array" ||
+                    node.type === "cast" ||
+                    node.type === "function" ||
+                    node.type === "item" ||
+                    node.type === "meta" ||
+                    node.type === "mutate" ||
+                    node.type === "object" ||
+                    node.type === "property") {
+                    // watchStatus(node.id, node).then(function() {
+                    //     getQueue.push(node);
+                    // });
+                }
+            });
+
+            // Mark complete
+            promise = promise.then(function() {
+                $scope.loaded++;
+                callback();
+            });
+        }, 1);
+
         var init = function() {
             deregisterInit();
             $scope.context = $scope.storage.get('context');
             $scope.id = $scope.storage.get('id');
             $scope.searchRequest = $scope.storage.get('searchRequest');
             $scope.searchResult = $scope.storage.get('searchResult');
-            $scope.view = $scope.storage.get('calcView') || 'details';
+            $scope.view = $scope.storage.get('calcView');
             $scope.searchHistory = $scope.storage.get('searchHistory') || [];
             var selected = $scope.storage.get('selectedSearchTab');
             $scope.selectedSearchTab = (typeof selected === "number") ? selected : 0;
             $scope.refresh();
         };
 
-        /**
-         * @summary Resolves calculation references.
-         * @description
-         * `data` is an object containing a calculation id and the path to the calculation and
-         * `callback` is a function that should be called when the worker has finished execution.
-         */
-        var calcReferenceQueue = async.queue(function(data, callback) {
-            getRequest(data.id).then(function(req) {
-                memcache.raw_requests[data.id] = req;
-                $scope.loaded++;
-                return getCalcReferences(req, data.paths);
-            }).then(function(ids) {
-                var id;
-                for (var i = 0; i < ids.length; ++i) {
-                    id = ids[i];
-                    if (typeof memcache.raw_requests[id] === "undefined") {
-                        calcReferenceQueue.push({
-                            "id": id,
-                            "paths": _.find($scope.requests, "id", id).paths
-                        });
-                        $scope.total++;
-                    }
-                }
-                callback();
-            });
-        }, 1);
-
         // --------------------------------------------------
         // Local functions
-
-        /**
-         * @summary Adds the children for a node
-         *
-         * @param {object} obj - The node's data.
-         */
-        function addChildren(obj) {
-            var i, key, keys, request;
-            if (obj.id) {
-                request = memcache.raw_requests[obj.id];
-            } else {
-                request = obj.request;
-            }
-
-            if (typeof request.array !== "undefined") {
-                obj.type = "array";
-                obj.children = [];
-                for (i = 0; i < request.array.items.length; ++i) {
-                    obj.children.push(constructNode(request.array.items[i], "[" + i + "]", 1));
-                }
-            } else if (typeof request.cast !== "undefined") {
-                obj.type = "cast";
-                obj.children = [];
-                obj.children.push(constructNode(request.cast.object, "object", 1));
-            } else if (typeof request.function !== "undefined") {
-                obj.type = "function";
-                obj.children = [];
-                for (i = 0; i < request.function.args.length; ++i) {
-                    obj.children.push(constructNode(request.function.args[i], "arg" + i, 1));
-                }
-            } else if (typeof request.item !== "undefined") {
-                obj.type = "item";
-                obj.children = [];
-                obj.children.push(constructNode(request.item.array, "array", 1));
-                obj.children.push(constructNode(request.item.index, "index", 1));
-            } else if (typeof request.meta !== "undefined") {
-                obj.type = "meta";
-                obj.children = [];
-                obj.children.push(constructNode(request.meta.generator, "generator", 1));
-            } else if (typeof request.mutate !== "undefined") {
-                obj.type = "mutate";
-                obj.children = [];
-                obj.children.push(constructNode(request.mutate.object, "object", 1));
-            } else if (typeof request.object !== "undefined") {
-                obj.type = "object";
-                obj.children = [];
-                keys = Object.keys(request.object.properties).sort();
-                for (i = 0; i < keys.length; ++i) {
-                    key = keys[i];
-                    obj.children.push(constructNode(request.object.properties[key], "[" + JSON.stringify(key) + "]", 1));
-                }
-            } else if (typeof request.property !== "undefined") {
-                obj.type = "property";
-                obj.children = [];
-                obj.children.push(constructNode(request.property.object, "object", 1));
-                obj.children.push(constructNode(request.property.field, "field", 1));
-            } else if (typeof request.reference !== "undefined") {
-                obj.type = "reference";
-                obj.reference = request.reference;
-            } else { // if (typeof request.value !== "undefined")
-                obj.type = "value";
-                obj.value = JSON.stringify(request.value, null, "\t");
-            }
-        }
-
-        /**
-         * @summary Adds an element to a list of branch pads.
-         *
-         * @param {number[][]} paths - An array of path lists.
-         * @param {number} element - The number to add to the path.
-         * @returns {number[][]} An array of path lists.
-         */
-        function branchPaths(paths, element) {
-            paths = _.cloneDeep(paths);
-            if (paths.length === 0) {
-                paths.push([element]);
-                return paths;
-            }
-            for (var i = 0; i < paths.length; ++i) {
-                var path = paths[i];
-                path.push(element);
-            }
-            return paths;
-        }
 
         /**
          * @summary Collapses a node.
@@ -211,171 +317,6 @@
                 "C" + (d.y + d.parent.y) / 2 + "," + d.x +
                 " " + (d.y + d.parent.y) / 2 + "," + d.parent.x +
                 " " + d.parent.y + "," + d.parent.x;
-        }
-
-        /**
-         * @summary Add calculation references to the given list.
-         *
-         * @param {object} req - A calculation request.
-         * @param {string[]} list - A list to add all calculation references to.
-         * @param {number[]} paths - A list of array of indices within the children arrays of nodes
-         *   that provide a path to the current node.
-         */
-        function collectCalcReferences(req, list, paths) {
-            var i, key, keys, id, service, npath;
-            if (typeof req.array !== "undefined") {
-                for (i = 0; i < req.array.items.length; ++i) {
-                    collectCalcReferences(req.array.items[i], list, branchPaths(paths, i));
-                }
-            } else if (typeof req.cast !== "undefined") {
-                collectCalcReferences(req.cast.object, list, branchPaths(paths, 0));
-            } else if (typeof req.function !== "undefined") {
-                for (i = 0; i < req.function.args.length; ++i) {
-                    collectCalcReferences(req.function.args[i], list, branchPaths(paths, i));
-                }
-            } else if (typeof req.item !== "undefined") {
-                collectCalcReferences(req.item.array, list, branchPaths(paths, 0));
-                collectCalcReferences(req.item.index, list, branchPaths(paths, 1));
-            } else if (typeof req.meta !== "undefined") {
-                collectCalcReferences(req.meta.generator, list, branchPaths(paths, 0));
-            } else if (typeof req.mutate !== "undefined") {
-                collectCalcReferences(req.mutate.object, list, branchPaths(paths, 0));
-            } else if (typeof req.object !== "undefined") {
-                keys = Object.keys(req.object.properties).sort();
-                for (i = 0; i < keys.length; ++i) {
-                    key = keys[i];
-                    collectCalcReferences(req.object.properties[key], list, branchPaths(paths, i));
-                }
-            } else if (typeof req.property !== "undefined") {
-                collectCalcReferences(req.property.object, list, branchPaths(paths, 0));
-                collectCalcReferences(req.property.field, list, branchPaths(paths, 1));
-            } else if (typeof req.reference !== "undefined") {
-                id = req.reference;
-                service = getService(id);
-                if (service === "calc") {
-                    if (list.indexOf(id) < 0) {
-                        list.push(id);
-                        $scope.requests.push({
-                            "id": id,
-                            "paths": paths
-                        });
-                    } else {
-                        var request = _.find($scope.requests, "id", id);
-                        request.paths = request.paths.concat(paths);
-                    }
-                }
-            }
-        }
-
-        /**
-         * @summary Constructs and returns a node.
-         *
-         * @param {object} definition - The request definition.
-         * @param {string} parent_type - The type with respect to the parent.
-         * @param {number} depth - The maximum depth at which to traverse the tree.
-         * @returns {object} The newly constructed node.
-         */
-        function constructNode(definition, parent_type, depth) {
-            var obj = {};
-            var i, key, keys, request, service;
-
-            if (typeof parent_type === "string") {
-                obj.ptype = parent_type;
-            }
-
-            depth = depth || 0;
-            if (typeof definition.reference === "string" &&
-                getService(definition.reference) === "calc") {
-                obj.id = definition.reference;
-                watchStatus(obj).then(function() {
-                    return getObject(obj.id);
-                }).then(function(data) {
-                    obj.data = data;
-                    var result = _.find($scope.results, "id", obj.id);
-                    if (!result) {
-                        $scope.results.push({
-                            "id": obj.id,
-                            "data": obj.data
-                        });
-                    }
-                });
-                request = memcache.raw_requests[obj.id];
-                obj.type = getType(request);
-                if (depth > 0) {
-                    return obj;
-                }
-            } else {
-                request = definition;
-                obj.type = getType(request);
-                obj.request = request;
-                if (depth > 0) {
-                    return obj;
-                }
-            }
-
-            if (typeof request.array !== "undefined") {
-                obj.type = "array";
-                obj.children = [];
-                for (i = 0; i < request.array.items.length; ++i) {
-                    obj.children.push(constructNode(request.array.items[i], "[" + i + "]", depth + 1));
-                }
-            } else if (typeof request.cast !== "undefined") {
-                obj.type = "cast";
-                obj.children = [];
-                obj.children.push(constructNode(request.cast.object, "object", depth + 1));
-            } else if (typeof request.function !== "undefined") {
-                obj.type = "function";
-                obj.children = [];
-                var account = request.function.account;
-                var app = request.function.app;
-                var name = request.function.name;
-                for (i = 0; i < request.function.args.length; ++i) {
-                    var arg;
-                    try {
-                        arg = appinfo[account][app].functions[name].schema.function_type.parameters[i].name;
-                    } catch (e) {
-                        arg = "arg" + i;
-                    }
-                    obj.children.push(constructNode(request.function.args[i], arg, depth + 1));
-                }
-            } else if (typeof request.item !== "undefined") {
-                obj.type = "item";
-                obj.children = [];
-                obj.children.push(constructNode(request.item.array, "array", depth + 1));
-                obj.children.push(constructNode(request.item.index, "index", depth + 1));
-            } else if (typeof request.meta !== "undefined") {
-                obj.type = "meta";
-                obj.children = [];
-                obj.children.push(constructNode(request.meta.generator, "generator", depth + 1));
-            } else if (typeof request.mutate !== "undefined") {
-                obj.type = "mutate";
-                obj.children = [];
-                obj.children.push(constructNode(request.mutate.object, "object", depth + 1));
-            } else if (typeof request.object !== "undefined") {
-                obj.type = "object";
-                obj.children = [];
-                keys = Object.keys(request.object.properties).sort();
-                for (i = 0; i < keys.length; ++i) {
-                    key = keys[i];
-                    obj.children.push(constructNode(request.object.properties[key], "[" + JSON.stringify(key) + "]", depth + 1));
-                }
-            } else if (typeof request.property !== "undefined") {
-                obj.type = "property";
-                obj.children = [];
-                obj.children.push(constructNode(request.property.object, "object", depth + 1));
-                obj.children.push(constructNode(request.property.field, "field", depth + 1));
-            } else if (typeof request.reference !== "undefined") {
-                obj.type = "reference";
-                obj.reference = request.reference;
-                getObject(obj.reference).then(function(data) {
-                    obj.data = data;
-                });
-            } else { // if (typeof request.value !== "undefined")
-                obj.type = "value";
-                obj.value = JSON.stringify(request.value, null, "\t");
-            }
-
-            return obj;
         }
 
         /**
@@ -407,80 +348,6 @@
             }
         }
 
-        /**
-         * @summary Returns a list of calculation references contained in the request.
-         *
-         * @param {object} req - A calculation request.
-         * @param {number[]} paths - A list of arrays of indices within the children arrays of nodes
-         *   that provide a path to the current node.
-         * @returns {string[]} list - A list of calculation references.
-         */
-        function getCalcReferences(req, paths) {
-            var list = [];
-            collectCalcReferences(req, list, paths);
-            return list;
-        }
-
-        /**
-         * @summary Gets the manifest associated with the given context content.
-         *
-         * @param {object} info - The context content object.
-         * @returns {object} The manifest for the given context content.
-         */
-        function getManifest(info) {
-            var account = info.account;
-            var app = info.app;
-            if (info.source.version) {
-                return $http({
-                    method: "GET",
-                    url: session.url("/apm/apps/:account/:app/versions/:version", {
-                        "account": account,
-                        "app": app,
-                        "version": info.source.version
-                    }, {
-                        "include_manifest": true
-                    }),
-                    headers: {
-                        "Authorization": "Bearer " + session.token(),
-                        "Accept": "application/json"
-                    }
-                }).then(function(res) {
-                    return {
-                        "account": account,
-                        "app": app,
-                        "manifest": res.data.manifest
-                    };
-                }).catch(function(res) {
-                    return null;
-                });
-            } else if (info.source.branch) {
-                return $http({
-                    method: "GET",
-                    url: session.url("/apm/apps/:account/:app/branches/:branch", {
-                        "account": account,
-                        "app": app,
-                        "branch": info.source.branch
-                    }, {
-                        "include_manifest": true
-                    }),
-                    headers: {
-                        "Authorization": "Bearer " + session.token(),
-                        "Accept": "application/json"
-                    }
-                }).then(function(res) {
-                    return {
-                        "account": account,
-                        "app": app,
-                        "manifest": res.data.manifest
-                    };
-                }).catch(function(res) {
-                    return null;
-                });
-            } else {
-                return $q.resolve(null);
-            }
-        }
-
         /** 
          * @summary Given a reference id, retrieves the object.
          *
@@ -503,11 +370,11 @@
          * @returns {object} The resolved request.
          */
         function getRequest(id) {
-            var key = $scope.context + "-" + id;
-            if (typeof memcache.requests[key] !== "undefined") {
-                return $q.resolve(memcache.requests[key]);
+            var key = $scope.context + "-" + id + "-request";
+            if (typeof memcache[key] !== "undefined") {
+                return $q.resolve(memcache[key]);
             } else {
-                return (memcache.requests[key] = $http({
+                return (memcache[key] = $http({
                     method: "GET",
                     url: session.url("/calc/:id/resolved", {
                         "id": id
@@ -566,26 +433,14 @@
          * @returns {object} The status.
          */
         function getStatus(id, params) {
-            var key = $scope.context + "-" + id;
-            if (typeof memcache.statuses[key] !== "undefined") {
-                return memcache.statuses[key];
+            var key = $scope.context + "-" + id + "-status";
+            if (typeof memcache[key] !== "undefined") {
+                return memcache[key];
             } else {
-                return (memcache.statuses[key] = $http(params).then(function(res) {
-                    delete memcache.statuses[key];
+                return (memcache[key] = $http(params).then(function(res) {
+                    delete memcache[key];
                     return res;
                 }));
-            }
-        }
-
-        /**
-         * @summary Get the type of the given request.
-         *
-         * @param {object} request - The calculation request.
-         * @returns {string} The request type.
-         */
-        function getType(request) {
-            for (var type in request) {
-                return type;
             }
         }
 
@@ -617,15 +472,7 @@
          */
         function nodeClass(d) {
             var cls = "node";
-            if (d._children) {
-                cls += " full";
-            } else if (d.children) {
-                cls += " empty";
-            } else if (d.data.type !== "value" && d.data.type !== "reference") {
-                cls += " full";
-            } else {
-                cls += " empty";
-            }
+            cls += d._children ? " full" : " empty";
             if (d.data.type !== "value" && d.data.type !== "reference" && d.data.status) {
                 cls += " " + d.data.status.type;
             }
@@ -645,13 +492,12 @@
          * @returns {string} A string that labels the node.
          */
         function nodeText(d) {
-            var data, fcn, label = "";
+            var data, label = "";
             // Label with respect to parent.
             if (d.parent) {
                 data = d.parent.data;
                 if (data.type === "function") {
-                    fcn = memcache.raw_requests[data.id].function;
-                    label += fcn.account + "/" + fcn.app + "/" + fcn.name + "():";
+                    label += "f(x):";
                 } else if (data.type === "reference") {
                     label += "{}";
                 } else {
@@ -663,8 +509,7 @@
             // Label with respect to self
             data = d.data;
             if (data.type === "function") {
-                fcn = memcache.raw_requests[data.id].function;
-                label += fcn.account + "/" + fcn.app + "/" + fcn.name + "()";
+                label += "f(x)";
             } else if (data.type === "reference") {
                 label += "{}";
             } else {
@@ -685,10 +530,10 @@
          */
         function resolveData(immutable) {
             var key = $scope.context + "-" + immutable;
-            if (typeof memcache.data[key] !== "undefined") {
-                return $q.resolve(memcache.data[key]);
+            if (typeof memcache[key] !== "undefined") {
+                return $q.resolve(memcache[key]);
             } else {
-                return (memcache.data[key] = $http({
+                return (memcache[key] = $http({
                     method: "HEAD",
                     url: session.url("/iss/immutable/:id", {
                         "id": immutable
@@ -717,11 +562,11 @@
          */
         function resolveImmutable(id) {
             var key = $scope.context + "-" + id;
-            if (typeof memcache.immutables[key] !== "undefined") {
-                return memcache.immutables[key];
+            if (typeof memcache[key] !== "undefined") {
+                return memcache[key];
             } else {
                 var data = {};
-                return (memcache.immutables[key] = $http({
+                return (memcache[key] = $http({
                     method: "GET",
                     url: session.url("/iss/:id/immutable", {
                         "id": id
@@ -771,15 +616,174 @@
             } else if (node.children) {
                 index = path.shift();
                 reveal(node.children[index], path);
-            } else if (node._children) {
+            } else { // if (node._children)
                 index = path.shift();
                 reveal(node._children[index], path);
                 toggle(node);
-            } else {
-                toggle(node);
-                reveal(node, path);
             }
         }
+
+        // /**
+        //  * @summary Spawns a node based on the given data.
+        //  *
+        //  * @param {object} data - The data to use to contruct the node.
+        //  * @param {object} obj - The node info object.
+        //  * @param {integer[]} [path] - The path to the object.
+        //  */
+        // function spawn(data, obj, path) {
+        //     if (!path) {
+        //         path = [];
+        //     }
+        //     if (typeof data.reference !== "undefined") {
+        //         var service = getService(data.reference);
+        //         if (service === "calc") {
+        //             $scope.total++;
+        //             return getRequest(data.reference).then(function(request) {
+        //                 $scope.loaded++;
+        //                 // Add to request array
+        //                 var type;
+        //                 for (var p in request) {
+        //                     type = p;
+        //                     break;
+        //                 }
+        //                 $scope.requests.push({
+        //                     id: data.reference,
+        //                     type: type,
+        //                     path: path,
+        //                     // request: JSON.stringify(request)
+        //                 });
+
+        //                 var collection = [];
+        //                 // Add common properties
+        //                 obj.id = data.reference;
+        //                 // obj.request = JSON.stringify(request, null, 4);
+        //                 obj.children = [];
+
+        //                 // Add children based on type
+        //                 var i, new_data, new_path;
+        //                 if (typeof request.array !== "undefined") {
+        //                     obj.type = "array";
+        //                     for (i = 0; i < request.array.items.length; ++i) {
+        //                         new_data = {
+        //                             ptype: "[" + i + "]"
+        //                         };
+        //                         new_path = _.cloneDeep(path);
+        //                         new_path.push(obj.children.length);
+        //                         collection.push(spawn(request.array.items[i], new_data, new_path));
+        //                         obj.children.push(new_data);
+        //                     }
+        //                 } else if (typeof request.cast !== "undefined") {
+        //                     obj.type = "cast";
+        //                     new_data = {
+        //                         ptype: "object"
+        //                     };
+        //                     new_path = _.cloneDeep(path);
+        //                     new_path.push(obj.children.length);
+        //                     collection.push(spawn(request.cast.object, new_data, new_path));
+        //                     obj.children.push(new_data);
+        //                 } else if (typeof request.function !== "undefined") {
+        //                     obj.type = "function";
+        //                     for (i = 0; i < request.function.args.length; ++i) {
+        //                         new_data = {
+        //                             ptype: "arg" + i
+        //                         };
+        //                         new_path = _.cloneDeep(path);
+        //                         new_path.push(obj.children.length);
+        //                         collection.push(spawn(request.function.args[i], new_data, new_path));
+        //                         obj.children.push(new_data);
+        //                     }
+        //                 } else if (typeof request.item !== "undefined") {
+        //                     obj.type = "item";
+        //                     new_data = {
+        //                         ptype: "array"
+        //                     };
+        //                     new_path = _.cloneDeep(path);
+        //                     new_path.push(obj.children.length);
+        //                     collection.push(spawn(request.item.array, new_data, new_path));
+        //                     obj.children.push(new_data);
+        //                     new_data = {
+        //                         ptype: "index"
+        //                     };
+        //                     new_path = _.cloneDeep(path);
+        //                     new_path.push(obj.children.length);
+        //                     collection.push(spawn(request.item.index, new_data, new_path));
+        //                     obj.children.push(new_data);
+        //                 } else if (typeof request.meta !== "undefined") {
+        //                     obj.type = "meta";
+        //                     new_data = {
+        //                         ptype: "generator"
+        //                     };
+        //                     new_path = _.cloneDeep(path);
+        //                     new_path.push(obj.children.length);
+        //                     collection.push(spawn(request.meta.generator, new_data, new_path));
+        //                     obj.children.push(new_data);
+        //                 } else if (typeof request.mutate !== "undefined") {
+        //                     obj.type = "mutate";
+        //                     new_data = {
+        //                         ptype: "object"
+        //                     };
+        //                     new_path = _.cloneDeep(path);
+        //                     new_path.push(obj.children.length);
+        //                     collection.push(spawn(request.mutate.object, new_data, new_path));
+        //                     obj.children.push(new_data);
+        //                 } else if (typeof request.object !== "undefined") {
+        //                     obj.type = "object";
+        //                     for (i in request.object.properties) {
+        //                         new_data = {
+        //                             ptype: "[" + JSON.stringify(i) + "]"
+        //                         };
+        //                         new_path = _.cloneDeep(path);
+        //                         new_path.push(obj.children.length);
+        //                         collection.push(spawn(request.object.properties[i], new_data, new_path));
+        //                         obj.children.push(new_data);
+        //                     }
+        //                 } else if (typeof request.property !== "undefined") {
+        //                     obj.type = "property";
+        //                     new_data = {
+        //                         ptype: "object"
+        //                     };
+        //                     new_path = _.cloneDeep(path);
+        //                     new_path.push(obj.children.length);
+        //                     collection.push(spawn(request.property.object, new_data, new_path));
+        //                     obj.children.push(new_data);
+        //                     new_data = {
+        //                         ptype: "field"
+        //                     };
+        //                     new_path = _.cloneDeep(path);
+        //                     new_path.push(obj.children.length);
+        //                     collection.push(spawn(request.property.field, new_data, new_path));
+        //                     obj.children.push(new_data);
+        //                 }
+        //                 return $q.all(collection);
+        //             }).then(function() {
+        //                 watchStatus(data.reference, obj).then(function() {
+        //                     if (obj.status.type === "completed") {
+        //                         getQueue.push(obj, function() {
+        //                             $scope.results.push({
+        //                                 id: obj.id,
+        //                                 data: obj.data,
+        //                                 type: obj.type,
+        //                                 path: path
+        //                             });
+        //                         });
+        //                     }
+        //                 });
+        //             });
+        //         } else if (service === "iss") {
+        //             obj.type = "posted";
+        //             obj.id = data.reference;
+        //             getQueue.push(obj);
+        //             return $q.resolve();
+        //         } else {
+        //             $scope.error = "Invalid id: " + data.reference;
+        //             return $q.reject(new Error("Invalid id: " + data.reference));
+        //         }
+        //     } else if (typeof data.value !== "undefined") {
+        //         obj.type = "value";
+        //         obj.value = JSON.stringify(data.value, null, "\t");
+        //         return $q.resolve();
+        //     }
+        // }
 
         /**
          * @summary Toggles the node open or closed.
@@ -790,26 +794,9 @@
             if (d.children) {
                 d._children = d.children;
                 d.children = null;
-                d.data.closed = true;
-            } else if (d._children) {
+            } else {
                 d.children = d._children;
                 d._children = null;
-                d.data.closed = false;
-            } else if (d.data.type !== "value" && d.data.type !== "reference") {
-                addChildren(d.data);
-                root = d3.hierarchy(root_obj);
-                root.each(function(d) {
-                    if (d.data.closed && d.children) {
-                        d._children = d.children;
-                        d.children = null;
-                    } else if (d.data.open && d._children) {
-                        d.children = d._children;
-                        d._children = null;
-                    }
-                    if (!d.id) {
-                        d.id = ++i;
-                    }
-                });
             }
             update(d);
         }
@@ -886,8 +873,6 @@
                         nodes.attr("class", nodeClass);
                         // Put selection into scope variable
                         $scope.selected = d.data;
-                        var str = JSON.stringify(memcache.raw_requests[d.data.id], null, "\t");
-                        $scope.selected.request = str;
                         $scope.$apply();
                     }
                 }).on("contextmenu", function(d) {
@@ -1031,10 +1016,10 @@
         /**
          * @summary Updates the status of a calculation by long polling.
          *
+         * @param {string} id - The id of the calculation.
          * @param {object} obj - The object for which to update the status.
          */
-        function watchStatus(obj) {
-            var id = obj.id;
+        function watchStatus(id, obj) {
             var params = {
                 method: "GET",
                 headers: {
@@ -1140,7 +1125,7 @@
                 // Update labels
                 svg.selectAll("g.node text").text(nodeText);
                 if (retry) {
-                    return watchStatus(obj);
+                    return watchStatus(id, obj);
                 }
             });
         }
@@ -1159,6 +1144,7 @@
         $scope.loaded = 0;
         $scope.total = 0;
         $scope.max_immutable_size = MAX_IMMUTABLE_SIZE;
+        $scope.max_depth = 0;
 
         // --------------------------------------------------
         // Scope methods
@@ -1283,62 +1269,31 @@
                 $scope.error = "Invalid id provided.";
                 return (refreshPromise = $q.resolve());
             }
-            var service = getService($scope.id);
-            if (service !== "calc") {
-                $scope.error = "Invalid id provided.";
-                return (refreshPromise = $q.resolve());
-            }
             $scope.storage.set('id', $scope.id);
             $scope.requests.length = 0;
             $scope.results.length = 0;
             $scope.loaded = 0;
             $scope.total = 0;
             $scope.loading = true;
-            appinfo = {};
             // Return if the context or id is invalid.
             return (refreshPromise = inspectContext().then(function(info) {
                 if (info.bucket !== "#ref") {
                     $scope.bucket = info.bucket;
                 }
-                var contents = [];
-                for (var i = 0; i < info.contents.length; ++i) {
-                    contents.push(getManifest(info.contents[i]));
-                }
-                return $q.all(contents);
-            }).then(function(data) {
-                var datum, fn;
-                for (var i = 0; i < data.length; ++i) {
-                    datum = data[i];
-                    if (!appinfo[datum.account]) {
-                        appinfo[datum.account] = {};
-                    }
-                    if (!appinfo[datum.account][datum.app]) {
-                        appinfo[datum.account][datum.app] = {
-                            "functions": []
-                        };
-                    }
-                    for (var j = 0; j < datum.manifest.functions.length; ++j) {
-                        fn = datum.manifest.functions[j];
-                        appinfo[datum.account][datum.app].functions[fn.name] = fn;
-                    }
-                }
                 var deferred = $q.defer();
-                calcReferenceQueue.drain = deferred.resolve;
-                calcReferenceQueue.push({
-                    "id": $scope.id,
-                    "paths": []
+                nodeQueue.drain = deferred.resolve;
+                nodeQueue.unshift({
+                    definition: {
+                        reference: $scope.id
+                    },
+                    node: root_obj,
+                    root: true,
+                    depth: 1
                 });
                 $scope.total++;
                 return deferred.promise;
             }).then(function() {
-                var req;
-                for (var i = 0; i < $scope.requests.length; ++i) {
-                    req = $scope.requests[i];
-                    req.filterText = JSON.stringify(memcache.raw_requests[req.id]).toLowerCase();
-                }
-                root_obj = constructNode({
-                    "reference": $scope.id
-                });
+                // console.log(root_obj);
                 root = d3.hierarchy(root_obj);
                 root.each(function(d) {
                     d.id = ++i;
@@ -1416,28 +1371,27 @@
         // Initialization
 
         deregisterInit = $rootScope.$on('initialized', init);
-
     }
 
     // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     // Filters
 
-    // function occurrences(str, substring) {
-    //     if (substring.length === 0) return substring.length + 1;
+    function occurrences(str, substring) {
+        if (substring.length === 0) return substring.length + 1;
 
-    //     var n = 0,
-    //         pos = 0,
-    //         step = substring.length;
+        var n = 0,
+            pos = 0,
+            step = substring.length;
 
-    //     while (true) {
-    //         pos = str.indexOf(substring, pos);
-    //         if (pos >= 0) {
-    //             ++n;
-    //             pos += step;
-    //         } else break;
-    //     }
-    //     return n;
-    // }
+        while (true) {
+            pos = str.indexOf(substring, pos);
+            if (pos >= 0) {
+                ++n;
+                pos += step;
+            } else break;
+        }
+        return n;
+    }
 
     function requestFilter() {
         return function(input, filter) {
@@ -1447,11 +1401,10 @@
             filter = filter.toLowerCase();
             var out = [];
             angular.forEach(input, function(item) {
-                if (item.filterText) {
-                    var str = item.filterText;
-                    if (str.indexOf(filter) > -1) {
-                        out.push(item);
-                    }
+                var str = item.request.toLowerCase();
+                if (str.indexOf(filter) > -1) {
+                    item.occurrences = occurrences(str, filter);
+                    out.push(item);
                 }
             });
             return out;
@@ -1499,7 +1452,7 @@
             }
             var out = [];
             angular.forEach(input, function(item) {
-                if (!item.data.type || !item.data.size) {
+                if (!item.data.type || item.data.size) {
                     return;
                 }
                 if (typeof parsed.type === "string" && item.data.type.indexOf(parsed.type) < 0) {

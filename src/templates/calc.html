@@ -34,25 +34,25 @@
                     <span>({{ selected.id }})<span>
                     <button type="button" ng-click="inspect(selected.id)" ng-disabled="selected.id === id"><i class="fa fa-external-link"></i></button>
                 </small></h3>
-                <div id="details-content-status" ng-show="selected.type !== 'posted' && selected.type !== 'value'">
+                <div id="details-content-status" ng-show="selected.type !== 'reference' && selected.type !== 'value'">
                     <h4>Status</h4>
                     <div ui-ace="{
                      mode: 'json',
                      onLoad: aceLoaded
                      }" ng-model="selected.status.body" readonly></div>
                 </div>
-                <div id="details-content-data" ng-show="selected.type === 'posted' || selected.type === 'value' || selected.status.type !== 'failed'">
+                <div id="details-content-data" ng-show="selected.type === 'reference' || selected.type === 'value' || selected.status.type !== 'failed'">
                     <h4>Data</h4>
-                    <div ng-show="selected.type !== 'posted' && selected.type !== 'value' && selected.status.type !== 'completed'"><i class="fa fa-spinner fa-spin"></i></div>
-                    <div ng-show="selected.type === 'posted' || selected.type === 'value' || selected.status.type === 'completed'">
+                    <div ng-show="selected.type !== 'reference' && selected.type !== 'value' && selected.status.type !== 'completed'"><i class="fa fa-spinner fa-spin"></i></div>
+                    <div ng-show="selected.type === 'reference' || selected.type === 'value' || selected.status.type === 'completed'">
                         <div ng-show="selected.type === 'value'">
                             <div ui-ace="{
                              mode: 'json',
                              onLoad: aceLoaded
                              }" ng-model="selected.value" readonly></div>
                          </div>
-                         <div ng-show="selected.type === 'posted' || selected.status.type === 'completed'">
-                            <span ng-hide="selected.data.size <= max_immutable_size">Size exceeds allowable limit to show as JSON.</span>
+                         <div ng-show="selected.type === 'reference' || selected.status.type === 'completed'">
+                            <span ng-hide="selected.data.size <= max_immutable_size">Size exceeds allowable limit to show as JSON (size={{ selected.data.size }}, max={{ max_immutable_size }}.</span>
                             <button ng-show="selected.data.size <= max_immutable_size && !selected.data.body" ng-click="fetchData()" ng-disabled="fetching">Fetch JSON</button>
                             <div ui-ace="{
                              mode: 'json',
@@ -63,7 +63,7 @@
                         <button ng-click="download('octet-stream')"><i class="fa fa-download"></i> Binary</button>
                     </div>
                 </div>
-                <div id="details-content-request" ng-show="selected.type !== 'posted' && selected.type !== 'value'">
+                <div id="details-content-request" ng-show="selected.type !== 'reference' && selected.type !== 'value'">
                     <h4>Request</h4>
                     <div ui-ace="{
                      mode: 'json',
@@ -89,11 +89,18 @@
                         <div class="search-results">
                             <div class="search-result" ng-repeat="req in requests | request:searchRequest">
                                 <div><span class="search-result-id">{{req.id}}</span> <span class="search-result-type">{{req.type}}</span></div>
-                                <div><span class="search-result-occurrences">{{req.occurrences}} occurrence(s)</span></div>
+                                <div><span class="search-result-occurrences">{{req.paths.length}} instance(s)</span></div>
                                 <div class="search-result-buttons">
-                                    <button type="button" ng-click="reveal(req.path)"><i class="fa fa-eye"></i></button>
                                     <button type="button" ng-click="inspect(req.id)" ng-disabled="req.id === id"><i class="fa fa-external-link"></i></button>
                                 </div>
+                                <ul>
+                                    <li ng-repeat="path in req.paths">
+                                        <span>Path {{$index}}</span>
+                                        <div class="search-result-buttons">
+                                            <button type="button" ng-click="reveal(path)"><i class="fa fa-eye"></i></button>
+                                        </div>
+                                    </li>
+                                </ul>
                             </div>
                         </div>
                     </md-tab>
@@ -108,7 +115,6 @@
                                 <div><span class="search-result-type">Type: {{res.data.type}}</div>
                                 <div><span class="search-result-size">Size: {{res.data.size}}</div>
                                 <div class="search-result-buttons">
-                                    <button type="button" ng-click="reveal(res.path)"><i class="fa fa-eye"></i></button>
                                     <button type="button" ng-click="inspect(res.id)" ng-disabled="res.id === id"><i class="fa fa-external-link"></i></button>
                                 </div>
                             </div>
