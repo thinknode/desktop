@@ -669,8 +669,8 @@
                 } else {
                     label += data.type;
                 }
-            } else if (d.children) {
-                // If open, label with respect to "self"
+            } else if (d.children || !d.parent) {
+                // If open or root node, label with respect to "self"
                 if (data.type === "function") {
                     fcn = memcache.raw_requests[data.id].function;
                     label += fcn.account + "/" + fcn.app + "/" + fcn.name + "()";
@@ -778,19 +778,21 @@
          * @param {integer[]} path - A path to a calculation to reveal (highlight).
          */
         function reveal(node, path) {
-            var index;
+            var index, retry;
             if (path.length === 0) {
                 node.highlight = true;
+                return false;
             } else if (node.children) {
                 index = path.shift();
-                reveal(node.children[index], path);
+                return reveal(node.children[index], path);
             } else if (node._children) {
                 index = path.shift();
-                reveal(node._children[index], path);
+                retry = reveal(node._children[index], path);
                 toggle(node);
+                return retry;
             } else {
                 toggle(node);
-                reveal(node, path);
+                return true;
             }
         }
 
@@ -804,6 +806,10 @@
                 d._children = d.children;
                 d.children = null;
                 d.data.closed = true;
+                // Remove any existing highlights on children
+                d._children.forEach(function(node) {
+                    node.highlight = false;
+                });
             } else if (d._children) {
                 d.children = d._children;
                 d._children = null;
@@ -815,7 +821,7 @@
                     if (d.data.closed && d.children) {
                         d._children = d.children;
                         d.children = null;
-                    } else if (d.data.open && d._children) {
+                    } else if (!d.data.closed && d._children) {
                         d.children = d._children;
                         d._children = null;
                     }
@@ -1309,6 +1315,7 @@
             $scope.total = 0;
             $scope.loading = true;
             appinfo = {};
+            memcache.raw_requests = {};
             // Return if the context or id is invalid.
             return (refreshPromise = inspectContext().then(function(info) {
                 if (info.bucket !== "#ref") {
@@ -1336,6 +1343,11 @@
                         appinfo[datum.account][datum.app].functions[fn.name] = fn;
                     }
                 }
+                // Initialize with root request
+                $scope.requests.push({
+                    "id": $scope.id,
+                    "paths": [[]]
+                });
                 var deferred = $q.defer();
                 calcReferenceQueue.drain = deferred.resolve;
                 calcReferenceQueue.push({
@@ -1394,12 +1406,18 @@
          * @param {number[]} path - The path to the calculation.
          */
         $scope.reveal = function(path) {
-            path = _.cloneDeep(path);
-            root.each(function(d) {
-                d.highlight = false;
-            });
-            reveal(root, path);
+            var retry = true;
+            while (retry) {
+                var clone = _.cloneDeep(path);
+                root.each(function(d) {
+                    d.highlight = false;
+                });
+                retry = reveal(root, clone);
+            }
             update(root);
+            $timeout(function() {
+                svg.selectAll("g.node").attr("class", nodeClass);
+            }, 1000);
         };
 
         /**

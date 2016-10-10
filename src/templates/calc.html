@@ -52,7 +52,7 @@
                              }" ng-model="selected.value" readonly></div>
                          </div>
                          <div ng-show="selected.type === 'reference' || selected.status.type === 'completed'">
-                            <span ng-hide="selected.data.size <= max_immutable_size">Size exceeds allowable limit to show as JSON (size={{ selected.data.size }}, max={{ max_immutable_size }}.</span>
+                            <span ng-hide="selected.data.size <= max_immutable_size">Size exceeds allowable limit to show as JSON (size={{ selected.data.size }}, max={{ max_immutable_size }}).</span>
                             <button ng-show="selected.data.size <= max_immutable_size && !selected.data.body" ng-click="fetchData()" ng-disabled="fetching">Fetch JSON</button>
                             <div ui-ace="{
                              mode: 'json',
