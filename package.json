@@ -1,6 +1,6 @@
 {
   "name": "thinknode-desktop",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "description": "Desktop application for exploring and interacting with the Thinknode API",
   "main": "main.js",
   "scripts": {
