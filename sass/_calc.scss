@@ -289,11 +289,7 @@
                 div.search-result {
                     border-bottom: 1px dashed $border-silver;
                     padding: 10px;
-
-                    &:hover {
-                        cursor: pointer;
-                        background-color: $silver-lighter;
-                    }
+                    background: white;
 
                     &:not(:first) {
                         border-top: 1px solid $border-silver;
@@ -315,6 +311,13 @@
                         margin-left: 15px;
                     }
 
+                    ul.search-result-paths {
+                        li {
+                            margin-top: 10px;
+                            font-size: 12px;
+                        }
+                    }
+
                     div.search-result-buttons {
                         margin-left: 15px;
 
@@ -323,10 +326,18 @@
                             padding: 5px 0;
                             min-width: 25px !important;
 
+                            &.inspect {
+                                margin-top: 8px;
+                            }
+
                             &:disabled {
                                 cursor: not-allowed;
                                 background: $grey;
                                 color: $tan;
+                            }
+
+                            &:hover {
+                                background: $orange;
                             }
                         }
                     }
